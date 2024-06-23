@@ -1,0 +1,5 @@
+{
+  "dependencies": {
+    "nft.storage": "^7.1.1"
+  }
+}
