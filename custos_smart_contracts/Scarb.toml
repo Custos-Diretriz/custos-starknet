@@ -11,3 +11,4 @@ openzeppelin = { git = "https://github.com/openzeppelin/cairo-contracts", tag = 
 
 [[target.starknet-contract]]
 sierra = true
+casm = true
