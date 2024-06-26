@@ -2,7 +2,7 @@ use starknet::ContractAddress;
 
     #[starknet::interface]
     trait ICrimeWitness<TContractState> {
-        fn crime_record(ref self: TContractState, uri: Span<felt252>) -> bool;
+        fn crime_record(ref self: TContractState, uri: felt252, data: Span<felt252>) -> bool;
     }
 
 #[starknet::contract]
@@ -58,7 +58,7 @@ mod CrimeRecord{
 
     #[constructor]
     fn constructor(ref self: ContractState, owner: ContractAddress) {
-        self.erc721.initializer("MyToken", "MTK", "");
+        self.erc721.initializer("CrimeRecords", "CRD", "");
         self.ownable.initializer(owner);
     }
 
@@ -72,11 +72,12 @@ mod CrimeRecord{
 
     #[abi(embed_v0)]
     impl CrimeWitness of super::ICrimeWitness<ContractState> {
-        fn crime_record(ref self: ContractState, uri: Span<felt252>) -> bool {
+        fn crime_record(ref self: ContractState, uri: felt252, data: Span<felt252>) -> bool {
             let user = get_caller_address();
             let id_count = self.token_id.read() + 1;
+            // self.erc721.token_uri(id_count, uri);
+            self.erc721.safe_mint(user, id_count, data);
             self.token_id.write(id_count);
-            self.erc721.safe_mint(user, id_count, uri);
             true
         }
     }
