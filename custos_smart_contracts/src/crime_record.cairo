@@ -1,12 +1,12 @@
 use starknet::ContractAddress;
 
-    #[starknet::interface]
-    trait ICrimeWitness<TContractState> {
-        fn crime_record(ref self: TContractState, uri: felt252, data: Span<felt252>) -> bool;
-    }
+#[starknet::interface]
+trait ICrimeWitness<TContractState> {
+    fn crime_record(ref self: TContractState, uri: felt252, data: Span<felt252>) -> bool;
+}
 
 #[starknet::contract]
-mod CrimeRecord{
+mod CrimeRecord {
     use starknet::{ContractAddress, get_caller_address};
     use openzeppelin::access::ownable::OwnableComponent;
     use openzeppelin::introspection::src5::SRC5Component;
@@ -41,6 +41,7 @@ mod CrimeRecord{
         #[substorage(v0)]
         upgradeable: UpgradeableComponent::Storage,
         token_id: u256,
+        token_uri: LegacyMap::<u256, felt252>,
     }
 
     #[event]
@@ -54,6 +55,15 @@ mod CrimeRecord{
         OwnableEvent: OwnableComponent::Event,
         #[flat]
         UpgradeableEvent: UpgradeableComponent::Event,
+        URI: URI,
+    }
+
+    #[derive(Drop, starknet::Event)]
+    struct URI {
+        #[key]
+        id: u256,
+        uri: felt252,
+        msg: felt252,
     }
 
     #[constructor]
@@ -75,12 +85,19 @@ mod CrimeRecord{
         fn crime_record(ref self: ContractState, uri: felt252, data: Span<felt252>) -> bool {
             let user = get_caller_address();
             let id_count = self.token_id.read() + 1;
-            // self.erc721.token_uri(id_count, uri);
+            self.set_token_uri(id_count, uri);
             self.erc721.safe_mint(user, id_count, data);
             self.token_id.write(id_count);
             true
         }
     }
 
-   
+    #[generate_trait]
+    impl Private of PrivateTrait {
+        fn set_token_uri(ref self: ContractState, id: u256, uri: felt252) -> bool {
+            self.token_uri.write(id, uri);
+            self.emit(URI { id: id, uri: uri, msg: 'URI SET' });
+            true
+        }
+    }
 }
