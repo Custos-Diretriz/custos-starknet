@@ -3,6 +3,8 @@ use starknet::ContractAddress;
 #[starknet::interface]
 trait ICrimeWitness<TContractState> {
     fn crime_record(ref self: TContractState, uri: felt252, data: Span<felt252>) -> bool;
+    fn get_token_uri(self: @TContractState, id: u256) -> felt252;
+    fn get_all_user_uploads(self: @TContractState, user: ContractAddress) -> Array<u256>;
 }
 
 #[starknet::contract]
@@ -42,6 +44,7 @@ mod CrimeRecord {
         upgradeable: UpgradeableComponent::Storage,
         token_id: u256,
         token_uri: LegacyMap::<u256, felt252>,
+        owners: LegacyMap::<u256, ContractAddress>,
     }
 
     #[event]
@@ -89,6 +92,25 @@ mod CrimeRecord {
             self.erc721.safe_mint(user, id_count, data);
             self.token_id.write(id_count);
             true
+        }
+
+        fn get_token_uri(self: @ContractState, id: u256) -> felt252 {
+            self.token_uri.read(id)
+        }
+
+        fn get_all_user_uploads(self: @ContractState, user: ContractAddress) -> Array<u256> {
+            let mut user_ids = ArrayTrait::new();
+            let counter = self.token_id.read() + 1;
+            let mut index: u256 = 0;
+
+            while index < counter {
+                let owner = self.owners.read(index);
+                if owner == user {
+                    user_ids.append(index)
+                }
+                index += 1
+            };
+            user_ids
         }
     }
 
