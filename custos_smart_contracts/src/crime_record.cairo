@@ -121,7 +121,8 @@ mod CrimeRecord {
     impl Private of PrivateTrait {
         fn set_token_uri(ref self: ContractState, id: u256, uri: ByteArray) -> bool {
             self.token_uri.write(id, uri);
-            // self.emit(URI { id: id, uri: uri, msg: 'URI SET' });
+            let uri = self.token_uri.read(id);
+            self.emit(URI { id: id, uri: uri, msg: 'URI SET' });
             true
         }
     }
