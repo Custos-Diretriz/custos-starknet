@@ -6,9 +6,15 @@ name = "custos_smart_contracts"
 version = "0.1.0"
 dependencies = [
  "openzeppelin",
+ "snforge_std",
 ]
 
 [[package]]
 name = "openzeppelin"
 version = "0.14.0"
 source = "git+https://github.com/openzeppelin/cairo-contracts?tag=v0.14.0#f091c4f51ddeb10297db984acae965328c5a4e5b"
+
+[[package]]
+name = "snforge_std"
+version = "0.22.0"
+source = "git+https://github.com/foundry-rs/starknet-foundry.git?tag=v0.22.0#9b215944c6c5871c738381b4ded61bbf06e7ba35"
