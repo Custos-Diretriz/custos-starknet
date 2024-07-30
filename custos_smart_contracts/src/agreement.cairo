@@ -1,117 +1,145 @@
-use starknet::core::types::{Address, felt256};
-use starknet::core::utils::{get_selector_from_name, CairoContract};
+use starknet::ContractAddress;
+use starknet::{get_caller_address, storage_access};
 
 #[starknet::interface]
-trait ICrimeWitness<TContractState> {
-    fn crime_record(ref self: TContractState, uri: felt252) -> bool;
+trait IAgreement<TContractState> {
+    fn createAgreement(ref self: TContractState, content: felt252, secondPartyAddress: ContractAddress, firstPartyValidId: felt252, secondPartyValidId: felt252) -> u256;
+    fn getAgreementDetails(self: @TContractState, id: u256) -> LegalAgreement;
+    fn getAllAgreements(self: @TContractState) -> Array<LegalAgreement>;
+    fn getUserAgreements(self: @TContractState) -> Array<LegalAgreement>;
+    fn signAgreement(ref self: TContractState, agreementId: u256);
 }
-#[derive(Copy, Clone, Debug, Default, PartialEq, Eq)]
+
+#[derive(Copy, Clone)]
 struct LegalAgreement {
-    creator: Address,
-    content: Felt256,
-    second_party_address: Address,
-    first_party: DictAccess<Address, Participants>,
-    second_party: DictAccess<Address, Participants>,
+    creator: ContractAddress,
+    content: felt252,
+    second_party_address: ContractAddress,
+    first_party_valid_id: felt252,
+    second_party_valid_id: felt252,
     signed: bool,
     validate_signature: bool,
 }
 
-#[derive(Copy, Clone, Debug, Default, PartialEq, Eq)]
-struct Participants {
-    name: felt256,
-    valid_id: felt256,
-}
+#[starknet::contract]
+mod agreementContract {
+    use starknet::ContractAddress;
+    use starknet::{get_caller_address, storage_access};
+    use super::LegalAgreement;
+    use super;
 
-
-
-#[storage_var]
-fn agreement_count() -> felt256 {}
-
-#[event]
-fn AgreementCreated(agreement_id: felt256, creator: Address, content: felt256) {}
-
-#[event]
-fn AgreementSigned(agreement_id: felt256, signer: Address) {}
-
-#[event]
-fn AgreementValid(agreement_id: felt256, first_party_id: felt256, second_party_id: felt256) {}
-
-fn only_creators(id: felt256, sender: Address) -> Result<T> {
-    let creator = agreements().get(id).unwrap().creator;
-    if creator != sender {
-        return Err("Only the creator can perform this action.");
-    }
-    Ok(())
-}
-
-#[external]
-fn create_agreement(content: felt256, second_party_address: Address, first_party_name: felt256, first_party_valid_id: felt256) -> Result<felt256> {
-    let current_count = agreement_count().get().unwrap_or_default();
-    agreement_count().set(current_count + 1);
-
-    let agreement = LegalAgreement {
-        creator: get_caller_address(),
-        content: content,
-        second_party_address,
-        first_party: DictAccess::new(),
-        second_party: DictAccess::new(),
-        signed: false,
-        validate_signature: false,
-    };
-
-    let first_party_participant = Participants {
-        name: first_party_name,
-        valid_id: first_party_valid_id,
-    };
-    agreement.first_party.set(get_caller_address(), first_party_participant);
-
-    agreements().set(current_count + 1, agreement);
-
-    AgreementCreated::emit(current_count + 1, get_caller_address(), hash160(concat(content)));
-
-    Ok(current_count + 1)
-}
-
-#[external]
-fn sign_agreement(agreement_id: felt256, fullname: felt256, valid_id: felt256) -> Result<T> {
-    let agreement = agreements().get(agreement_id).ok_or("Agreement not found")?;
-    if agreement.second_party_address != get_caller_address() {
-        return Err("Only the second party can sign the agreement.");
-    }
-    if agreement.signed {
-        return Err("Agreement already signed.");
+    #[storage]
+    struct Storage {
+        agreement_count: u256,
+        agreements: LegacyMap<u256, LegalAgreement>,
     }
 
-    let mut updated_agreement = agreement;
-    updated_agreement.signed = true;
-    let second_party_participant = Participants {
-        name: fullname,
-        valid_id,
-    };
-    updated_agreement.second_party.set(get_caller_address(), second_party_participant);
-
-    agreements().set(agreement_id, updated_agreement);
-
-    AgreementSigned::emit(agreement_id, get_caller_address());
-
-    Ok(())
-}
-
-#[external]
-fn validate_signature(agreement_id: felt256) -> Result<T> {
-    let mut agreement = agreements().get(agreement_id).ok_or("Agreement not found")?;
-    if !agreement.signed {
-        return Err("Agreement not signed by both parties.");
+    #[event]
+    #[derive(Drop, starknet::Event)]
+    enum Event {
+        AgreementCreated: AgreementCreated,
+        AgreementSigned: AgreementSigned,
+        AgreementValid: AgreementValid
     }
 
-    agreement.validate_signature = true;
-    agreements().set(agreement_id, agreement);
+    #[derive(Drop, starknet::Event)]
+    struct AgreementCreated {
+        #[key]
+        agreement_id: u256,
+        creator: ContractAddress,
+        content: felt252,
+    }
 
-    AgreementValid::emit(
-        agreement_id,
-        agreement.first_party.get(agreement.creator).ok_or("First party not found")?.valid_id,
-        agreement.second_party.get(agreement.second_party_address).ok_or("Second party not found")?.valid_id,
-    );
+    #[derive(Drop, starknet::Event)]
+    struct AgreementSigned {
+        #[key]
+        agreement_id: u256, 
+        signer: ContractAddress,
+    }
 
-    Ok(())
-}
+    #[derive(Drop, starknet::Event)]
+    struct AgreementValid {
+        #[key]
+        agreement_id: u256, 
+        first_party_id: felt252,
+        second_party_id: felt252,
+    }
+
+    #[abi(embed_v0)]
+    impl AgreementContract of super::IAgreement<ContractState> {
+        fn createAgreement(ref self: ContractState, content: felt252, secondPartyAddress: ContractAddress, firstPartyValidId: felt252, secondPartyValidId: felt252) -> u256 {
+            let agreement_id = self.agreement_count.read();
+            let caller_address = get_caller_address();
+
+            let newagreement = LegalAgreement {
+                creator: caller_address,
+                content,
+                second_party_address: secondPartyAddress,
+                first_party_valid_id: firstPartyValidId,
+                second_party_valid_id: secondPartyValidId,
+                signed: false,
+                validate_signature: false,
+            };
+
+            self.agreements.write(agreement_id, newagreement);
+            self.agreement_count += 1;
+
+            // AgreementCreated {
+            //     agreement_id,
+            //     creator: caller_address,
+            //     content,
+            // }.emit();
+
+            return agreement_id;
+        }
+
+        fn getAgreementDetails(self: @ContractState, id: u256) -> LegalAgreement {
+            return self.agreements.read(id);
+        }
+
+        fn getAllAgreements(self: @ContractState) -> Array<LegalAgreement> {
+            let mut all_agreements = Array::new();
+            for i in 0..self.agreement_count {
+                all_agreements.push(self.agreements.read(i));
+            }
+            return all_agreements;
+        }
+
+        fn getUserAgreements(self: @ContractState) -> Array<LegalAgreement> {
+            let caller_address = get_caller_address();
+            let count = self.agreement_count.read();
+            let mut user_agreements = ArrayTrait::<LegalAgreement>::new();
+            for i in count {
+                let agreement = self.agreements.read(i);
+                if agreement.creator.read() == caller_address || agreement.second_party_address.read() == caller_address {
+                    user_agreements.append(agreement);
+                }
+            }
+            user_agreements
+        }
+
+        fn signAgreement(ref self: ContractState, agreementId: u256) {
+            let mut agreement = self.agreements.read(agreementId);
+            let caller_address = get_caller_address();
+
+            if caller_address == agreement.creator || caller_address == agreement.second_party_address {
+                self.agreement.signed.write(true);
+                self.agreements.write(agreementId, agreement);
+            }
+
+                // AgreementSigned {
+                //     agreement_id: agreementId,
+                //     signer: caller_address,
+                // }.emit();
+
+                // if agreement.signed {
+                //     AgreementValid {
+                //         agreement_id: agreementId,
+                //         first_party_id: agreement.first_party_valid_id,
+                //         second_party_id: agreement.second_party_valid_id,
+                //     }.emit();
+                // }
+            }
+        }
+    }
+
