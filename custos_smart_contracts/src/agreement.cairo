@@ -1,7 +1,7 @@
 use starknet::ContractAddress;
 
 #[starknet::interface]
-trait IAgreement<TContractState> {
+pub trait IAgreement<TContractState> {
     fn createAgreement(
         ref self: TContractState,
         content: felt252,
@@ -16,7 +16,7 @@ trait IAgreement<TContractState> {
 }
 
 #[starknet::contract]
-mod Agreement {
+pub mod Agreement {
     use starknet::ContractAddress;
     use starknet::{get_caller_address, storage_access};
 
