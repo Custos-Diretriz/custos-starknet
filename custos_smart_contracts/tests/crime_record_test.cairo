@@ -1,5 +1,6 @@
 use snforge_std::{declare, ContractClassTrait};
-use starknet::{ContractAddress, contract_address_const, deploy_syscall, SysCallResultTrait};
+use starknet::{ContractAddress, contract_address_const, SysCallResultTrait};
+use starknet::syscalls::deploy_syscall;
 use custos_smart_contracts::crime_record::{
     CrimeRecord, ICrimeWitnessDispatcher, ICrimeWitnessDispatcherTrait
 };

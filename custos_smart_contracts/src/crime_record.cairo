@@ -1,14 +1,14 @@
 use starknet::ContractAddress;
 
 #[starknet::interface]
-trait ICrimeWitness<TContractState> {
+pub trait ICrimeWitness<TContractState> {
     fn crime_record(ref self: TContractState, uri: ByteArray, data: Span<felt252>) -> bool;
     fn get_token_uri(self: @TContractState, id: u256) -> ByteArray;
     fn get_all_user_uploads(self: @TContractState, user: ContractAddress) -> Array<u256>;
 }
 
 #[starknet::contract]
-mod CrimeRecord {
+pub mod CrimeRecord {
     use starknet::{ContractAddress, get_caller_address};
     use openzeppelin::access::ownable::OwnableComponent;
     use openzeppelin::introspection::src5::SRC5Component;
