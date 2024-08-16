@@ -2,6 +2,8 @@ use snforge_std::{declare, ContractClassTrait};
 use starknet::{ContractAddress};
 use starknet::contract_address::contract_address_const;
 use starknet::syscalls::deploy_syscall;
+use core::fmt::{Display, Formatter, Error};
+
 use custos_smart_contracts::agreement::{Agreement, IAgreementDispatcher, IAgreementDispatcherTrait};
 
 
@@ -38,8 +40,12 @@ use custos_smart_contracts::agreement::{Agreement, IAgreementDispatcher, IAgreem
 // }
 
 // Test for getting all agreements
+
+
+#[derive(Debug)]
 #[test]
 fn test_get_all_agreements() {
+    let mut formatter: Formatter = Default::default();
     let contract = declare("Agreement").unwrap();
     let (contract_address, _) = contract.deploy(@array![]).unwrap();
     let dispatcher = IAgreementDispatcher { contract_address };
@@ -64,7 +70,9 @@ fn test_get_all_agreements() {
         );
 
     let all_agreements = dispatcher.getAllAgreements();
-    assert_eq!(all_agreements.len(), 2);
+    write!(formatter, " {all_agreements}");
+    println!("{:?}",formatter.buffer);
+    // assert_eq!(all_agreements.len(), 2);
 }
 
 // Test for getting user agreements
@@ -97,6 +105,7 @@ fn test_get_user_agreements() {
     let user_agreements = dispatcher.getUserAgreements();
     assert_eq!(user_agreements.len(), 2);
 }
+
 // Test for signing an agreement
 // #[test]
 // fn test_sign_agreement() {

@@ -12,7 +12,7 @@ pub trait IAgreement<TContractState> {
     fn getAgreementDetails(self: @TContractState, id: u256) -> Agreement::LegalAgreement;
     fn getAllAgreements(self: @TContractState) -> Array<Agreement::LegalAgreement>;
     fn getUserAgreements(self: @TContractState) -> Array<Agreement::LegalAgreement>;
-    fn signAgreement(ref self: TContractState, agreementId: u256);
+    fn validateAgreement(ref self: TContractState, agreementId: u256);
 }
 
 #[starknet::contract]
@@ -77,7 +77,7 @@ pub mod Agreement {
             firstPartyValidId: felt252,
             secondPartyValidId: felt252
         ) -> u256 {
-            let agreement_id = self.agreement_count.read();
+            let agreement_id = self.agreement_count.read()+1;
             let caller_address = get_caller_address();
 
             let newagreement = LegalAgreement {
@@ -86,7 +86,7 @@ pub mod Agreement {
                 second_party_address: secondPartyAddress,
                 first_party_valid_id: firstPartyValidId,
                 second_party_valid_id: secondPartyValidId,
-                signed: false,
+                signed: true,
                 validate_signature: false,
             };
 
@@ -94,6 +94,7 @@ pub mod Agreement {
             self.agreement_count.write(self.agreement_count.read() + 1);
 
             self.emit(AgreementCreated { agreement_id, creator: caller_address, content, });
+            self.emit(AgreementSigned { agreement_id: agreement_id, signer: caller_address, });
 
             return agreement_id;
         }
@@ -135,27 +136,18 @@ pub mod Agreement {
             user_agreements
         }
 
-        fn signAgreement(ref self: ContractState, agreementId: u256) {
+        fn validateAgreement(ref self: ContractState, agreementId: u256) {
             let mut agreement = self.agreements.read(agreementId);
             let caller_address = get_caller_address();
+            assert(caller_address == agreement.second_party_address, 'unauthorized caller');
+            
 
-            if caller_address == agreement.creator
-                || caller_address == agreement.second_party_address {
-                agreement.signed = true;
+            if  caller_address == agreement.second_party_address {
+                agreement.validate_signature = true;
+
                 self.agreements.write(agreementId, self.agreements.read(agreementId));
-            }
-            self.emit(AgreementSigned { agreement_id: agreementId, signer: caller_address, });
-
-            if agreement.signed {
-                self
-                    .emit(
-                        AgreementValid {
-                            agreement_id: agreementId,
-                            first_party_id: agreement.first_party_valid_id,
-                            second_party_id: agreement.second_party_valid_id,
-                        }
-                    );
-            }
+            };
+            self.emit(AgreementValid { agreement_id: agreementId, first_party_id: agreement.first_party_valid_id, second_party_id: agreement.second_party_valid_id, });
         }
     }
 }
