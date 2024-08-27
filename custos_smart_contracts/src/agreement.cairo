@@ -110,7 +110,7 @@ pub mod Agreement {
         }
 
         fn get_all_agreements(self: @ContractState) -> Array<LegalAgreement> {
-            assert_eq(get_caller_address(), self.admin.read());
+            assert(get_caller_address() == self.admin.read(), 'Not Admin');
             let mut all_agreements: Array<LegalAgreement> = ArrayTrait::new();
 
             let mut count = self.agreement_count.read();
