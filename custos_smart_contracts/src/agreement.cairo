@@ -2,17 +2,17 @@ use starknet::ContractAddress;
 
 #[starknet::interface]
 pub trait IAgreement<TContractState> {
-    fn createAgreement(
+    fn create_agreement(
         ref self: TContractState,
         content: felt252,
         secondPartyAddress: ContractAddress,
         firstPartyValidId: felt252,
         secondPartyValidId: felt252
     ) -> u256;
-    fn getAgreementDetails(self: @TContractState, id: u256) -> Agreement::LegalAgreement;
-    fn getAllAgreements(self: @TContractState) -> Array<Agreement::LegalAgreement>;
-    fn getUserAgreements(self: @TContractState) -> Array<Agreement::LegalAgreement>;
-    fn validateAgreement(ref self: TContractState, agreementId: u256);
+    fn get_agreement_details(self: @TContractState, id: u256) -> Agreement::LegalAgreement;
+    fn get_all_agreements(self: @TContractState) -> Array<Agreement::LegalAgreement>;
+    fn get_user_agreements(self: @TContractState) -> Array<Agreement::LegalAgreement>;
+    fn validate_agreement(ref self: TContractState, agreementId: u256);
 }
 
 #[starknet::contract]
@@ -24,6 +24,7 @@ pub mod Agreement {
     struct Storage {
         agreement_count: u256,
         agreements: LegacyMap<u256, LegalAgreement>,
+        admin: ContractAddress,
     }
 
     #[derive(Drop, Serde, starknet::Store)]
@@ -68,16 +69,21 @@ pub mod Agreement {
         second_party_id: felt252,
     }
 
+    #[constructor]
+    fn constructor(ref self: ContractState, admin: ContractAddress) {
+        self.admin.write(admin)
+    }
+
     #[abi(embed_v0)]
     impl AgreementContract of super::IAgreement<ContractState> {
-        fn createAgreement(
+        fn create_agreement(
             ref self: ContractState,
             content: felt252,
             secondPartyAddress: ContractAddress,
             firstPartyValidId: felt252,
             secondPartyValidId: felt252
         ) -> u256 {
-            let agreement_id = self.agreement_count.read()+1;
+            let agreement_id = self.agreement_count.read() + 1;
             let caller_address = get_caller_address();
 
             let newagreement = LegalAgreement {
@@ -99,15 +105,16 @@ pub mod Agreement {
             return agreement_id;
         }
 
-        fn getAgreementDetails(self: @ContractState, id: u256) -> LegalAgreement {
+        fn get_agreement_details(self: @ContractState, id: u256) -> LegalAgreement {
             return self.agreements.read(id);
         }
 
-        fn getAllAgreements(self: @ContractState) -> Array<LegalAgreement> {
+        fn get_all_agreements(self: @ContractState) -> Array<LegalAgreement> {
+            assert_eq(get_caller_address(), self.admin.read());
             let mut all_agreements: Array<LegalAgreement> = ArrayTrait::new();
 
             let mut count = self.agreement_count.read();
-            let mut counter = 0;
+            let mut counter = 1;
 
             while counter < count
                 + 1 {
@@ -118,11 +125,11 @@ pub mod Agreement {
             return all_agreements;
         }
 
-        fn getUserAgreements(self: @ContractState) -> Array<LegalAgreement> {
+        fn get_user_agreements(self: @ContractState) -> Array<LegalAgreement> {
             let caller_address = get_caller_address();
             let count = self.agreement_count.read();
             let mut user_agreements = ArrayTrait::<LegalAgreement>::new();
-            let mut i = 0;
+            let mut i = 1;
 
             while i < count
                 + 1 {
@@ -136,18 +143,24 @@ pub mod Agreement {
             user_agreements
         }
 
-        fn validateAgreement(ref self: ContractState, agreementId: u256) {
+        fn validate_agreement(ref self: ContractState, agreementId: u256) {
             let mut agreement = self.agreements.read(agreementId);
             let caller_address = get_caller_address();
             assert(caller_address == agreement.second_party_address, 'unauthorized caller');
-            
 
-            if  caller_address == agreement.second_party_address {
+            if caller_address == agreement.second_party_address {
                 agreement.validate_signature = true;
 
                 self.agreements.write(agreementId, self.agreements.read(agreementId));
             };
-            self.emit(AgreementValid { agreement_id: agreementId, first_party_id: agreement.first_party_valid_id, second_party_id: agreement.second_party_valid_id, });
+            self
+                .emit(
+                    AgreementValid {
+                        agreement_id: agreementId,
+                        first_party_id: agreement.first_party_valid_id,
+                        second_party_id: agreement.second_party_valid_id,
+                    }
+                );
         }
     }
 }
