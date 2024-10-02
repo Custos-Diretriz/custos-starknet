@@ -4,14 +4,16 @@ use starknet::ContractAddress;
 pub trait IAgreement<TContractState> {
     fn create_agreement(
         ref self: TContractState,
-        content: felt252,
+        content: ByteArray,
         secondPartyAddress: ContractAddress,
-        firstPartyValidId: felt252,
-        secondPartyValidId: felt252
+        firstPartyValidId: ByteArray,
+        secondPartyValidId: ByteArray
     ) -> u256;
     fn get_agreement_details(self: @TContractState, id: u256) -> Agreement::LegalAgreement;
     fn get_all_agreements(self: @TContractState) -> Array<Agreement::LegalAgreement>;
-    fn get_user_agreements(self: @TContractState) -> Array<Agreement::LegalAgreement>;
+    fn get_user_agreements(
+        self: @TContractState, address: ContractAddress
+    ) -> Array<Agreement::LegalAgreement>;
     fn validate_agreement(ref self: TContractState, agreementId: u256);
 }
 
@@ -30,10 +32,10 @@ pub mod Agreement {
     #[derive(Drop, Serde, starknet::Store)]
     pub struct LegalAgreement {
         creator: ContractAddress,
-        content: felt252,
+        content: ByteArray,
         second_party_address: ContractAddress,
-        first_party_valid_id: felt252,
-        second_party_valid_id: felt252,
+        first_party_valid_id: ByteArray,
+        second_party_valid_id: ByteArray,
         signed: bool,
         validate_signature: bool,
     }
@@ -50,8 +52,7 @@ pub mod Agreement {
     struct AgreementCreated {
         #[key]
         agreement_id: u256,
-        creator: ContractAddress,
-        content: felt252,
+        creator: ContractAddress
     }
 
     #[derive(Drop, starknet::Event)]
@@ -65,8 +66,8 @@ pub mod Agreement {
     struct AgreementValid {
         #[key]
         agreement_id: u256,
-        first_party_id: felt252,
-        second_party_id: felt252,
+        first_party_id: ByteArray,
+        second_party_id: ByteArray,
     }
 
     #[constructor]
@@ -78,10 +79,10 @@ pub mod Agreement {
     impl AgreementContract of super::IAgreement<ContractState> {
         fn create_agreement(
             ref self: ContractState,
-            content: felt252,
+            content: ByteArray,
             secondPartyAddress: ContractAddress,
-            firstPartyValidId: felt252,
-            secondPartyValidId: felt252
+            firstPartyValidId: ByteArray,
+            secondPartyValidId: ByteArray
         ) -> u256 {
             let agreement_id = self.agreement_count.read() + 1;
             let caller_address = get_caller_address();
@@ -99,7 +100,7 @@ pub mod Agreement {
             self.agreements.write(agreement_id, newagreement);
             self.agreement_count.write(self.agreement_count.read() + 1);
 
-            self.emit(AgreementCreated { agreement_id, creator: caller_address, content, });
+            self.emit(AgreementCreated { agreement_id, creator: caller_address, });
             self.emit(AgreementSigned { agreement_id: agreement_id, signer: caller_address, });
 
             return agreement_id;
@@ -125,8 +126,9 @@ pub mod Agreement {
             return all_agreements;
         }
 
-        fn get_user_agreements(self: @ContractState) -> Array<LegalAgreement> {
-            let caller_address = get_caller_address();
+        fn get_user_agreements(
+            self: @ContractState, address: ContractAddress
+        ) -> Array<LegalAgreement> {
             let count = self.agreement_count.read();
             let mut user_agreements = ArrayTrait::<LegalAgreement>::new();
             let mut i = 1;
@@ -134,8 +136,7 @@ pub mod Agreement {
             while i < count
                 + 1 {
                     let agreement = self.agreements.read(i);
-                    if agreement.creator == caller_address
-                        || agreement.second_party_address == caller_address {
+                    if agreement.creator == address || agreement.second_party_address == address {
                         user_agreements.append(agreement);
                     }
                     i + 1;
