@@ -1,0 +1,24 @@
+Custos Contributor Guidelines 
+Thank you for your interest in contributing to Custos! We welcome contributions of all types, whether you're fixing a bug, adding new features, or improving documentation. Please follow these guidelines to ensure a smooth contribution process. Table of Contents Code of Conduct How to Contribute Setting Up the Project Branching and Commit Guidelines Pull Requests Coding Standards Issue Reporting License
+
+Code of Conduct Please read and adhere to our [Code of Conduct](link to CoC). We expect all contributors to act with respect and professionalism.
+How to Contribute There are several ways you can contribute to Custos: Report Bugs: If you find any bugs or issues, please report them by opening an issue. Submit Feature Requests: If you have an idea for a new feature, create an issue describing it. Fix Issues: Look through our open issues for bugs or enhancements and submit a pull request (PR) with your fix or improvement. Improve Documentation: Contributions to the documentation are always appreciated.
+Setting Up the Project Before you start contributing, you need to set up the project locally: Fork the repository from the [Custos GitHub](repo URL). Clone your fork to your local machine: bash Copy code git clone https://github.com/your-username/custos.git
+Navigate to the project directory: bash Copy code cd custos
+
+Install project dependencies: bash Copy code npm install
+
+Run the project: bash Copy code npm start
+
+Ensure everything is working properly before making any changes. 4. Branching and Commit Guidelines Branch Naming: Use the following naming convention for branches: feature/your-feature-name for new features. bugfix/issue-number-description for bug fixes. hotfix/critical-fix for critical updates. Commit Messages: Write clear, descriptive commit messages. Follow this template for commit messages: Short Summary: What the commit does. Details: (Optional) Any relevant details or context. Example: vbnet Copy code fix: resolve issue with user authentication
+
+Fixed a bug where users were unable to log in after a token expired.
+
+Pull Requests Submitting a Pull Request: Ensure your branch is up to date with the main branch: bash Copy code git pull origin main
+Push your branch to your forked repository: bash Copy code git push origin your-branch-name
+
+Open a Pull Request (PR) against the main branch of Custos. Follow this checklist before submitting: The PR provides a clear description of the problem/feature. Ensure that your code follows the project’s Coding Standards. Link any relevant issues in the PR description (e.g., closes #issue-number). Reviewers may request changes, so please respond promptly to feedback. PR Review Process: PRs will be reviewed by maintainers, and you may be asked to make changes. Once approved and merged, your contribution will become part of Custos! 6. Coding Standards Style Guide: Follow our coding style, which is based on ESLint rules for JavaScript (or other language standards relevant to Custos). Code Quality: Write clean, readable, and maintainable code. Use meaningful names for variables, functions, and classes. Testing: Ensure your changes are covered by tests. Run tests locally before submitting a PR. Run the test suite with: bash Copy code npm test
+
+Issue Reporting If you encounter any issues or have suggestions, please open an issue using the following format: Title: A brief description of the issue. Description: A detailed explanation of the issue, including steps to reproduce it, if applicable. Environment: Include any relevant environment details (e.g., OS, browser, Node version). Screenshots/Logs: Attach screenshots or logs to help with debugging.
+License By contributing, you agree that your contributions will be licensed under the same [MIT License](link to license) that covers the Custos project.
+We’re excited to have you contribute to Custos and look forward to building something amazing together!
