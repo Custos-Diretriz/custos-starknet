@@ -1,24 +1,105 @@
-Custos Contributor Guidelines 
-Thank you for your interest in contributing to Custos! We welcome contributions of all types, whether you're fixing a bug, adding new features, or improving documentation. Please follow these guidelines to ensure a smooth contribution process. Table of Contents Code of Conduct How to Contribute Setting Up the Project Branching and Commit Guidelines Pull Requests Coding Standards Issue Reporting License
+### Custos-Starknet Smart Contract Contributor Guidelines
 
-Code of Conduct Please read and adhere to our [Code of Conduct](link to CoC). We expect all contributors to act with respect and professionalism.
-How to Contribute There are several ways you can contribute to Custos: Report Bugs: If you find any bugs or issues, please report them by opening an issue. Submit Feature Requests: If you have an idea for a new feature, create an issue describing it. Fix Issues: Look through our open issues for bugs or enhancements and submit a pull request (PR) with your fix or improvement. Improve Documentation: Contributions to the documentation are always appreciated.
-Setting Up the Project Before you start contributing, you need to set up the project locally: Fork the repository from the [Custos GitHub](repo URL). Clone your fork to your local machine: bash Copy code git clone https://github.com/your-username/custos.git
-Navigate to the project directory: bash Copy code cd custos
+Thank you for your interest in contributing to the Custos-Starknet project! This repository contains the smart contracts for Custos, written in Cairo using Scarb. We appreciate contributions of all types, whether it’s a bug fix, new feature, or improvement to our documentation. Please follow the guidelines below to ensure a smooth contribution process.
 
-Install project dependencies: bash Copy code npm install
+## Table of Contents
+1. [Code of Conduct](#code-of-conduct)
+2. [How to Contribute](#how-to-contribute)
+3. [Setting Up the Project](#setting-up-the-project)
+4. [Branching and Commit Guidelines](#branching-and-commit-guidelines)
+5. [Pull Requests](#pull-requests)
+6. [Coding Standards](#coding-standards)
+7. [Issue Reporting](#issue-reporting)
+8. [Resources](#resources)
+9. [License](#license)
 
-Run the project: bash Copy code npm start
+---
 
-Ensure everything is working properly before making any changes. 4. Branching and Commit Guidelines Branch Naming: Use the following naming convention for branches: feature/your-feature-name for new features. bugfix/issue-number-description for bug fixes. hotfix/critical-fix for critical updates. Commit Messages: Write clear, descriptive commit messages. Follow this template for commit messages: Short Summary: What the commit does. Details: (Optional) Any relevant details or context. Example: vbnet Copy code fix: resolve issue with user authentication
+## 1. Code of Conduct
 
-Fixed a bug where users were unable to log in after a token expired.
+Please adhere to our [Code of Conduct](#). We expect all contributors to maintain professionalism and respect when engaging with the community.
 
-Pull Requests Submitting a Pull Request: Ensure your branch is up to date with the main branch: bash Copy code git pull origin main
-Push your branch to your forked repository: bash Copy code git push origin your-branch-name
+---
 
-Open a Pull Request (PR) against the main branch of Custos. Follow this checklist before submitting: The PR provides a clear description of the problem/feature. Ensure that your code follows the project’s Coding Standards. Link any relevant issues in the PR description (e.g., closes #issue-number). Reviewers may request changes, so please respond promptly to feedback. PR Review Process: PRs will be reviewed by maintainers, and you may be asked to make changes. Once approved and merged, your contribution will become part of Custos! 6. Coding Standards Style Guide: Follow our coding style, which is based on ESLint rules for JavaScript (or other language standards relevant to Custos). Code Quality: Write clean, readable, and maintainable code. Use meaningful names for variables, functions, and classes. Testing: Ensure your changes are covered by tests. Run tests locally before submitting a PR. Run the test suite with: bash Copy code npm test
+## 2. How to Contribute
 
-Issue Reporting If you encounter any issues or have suggestions, please open an issue using the following format: Title: A brief description of the issue. Description: A detailed explanation of the issue, including steps to reproduce it, if applicable. Environment: Include any relevant environment details (e.g., OS, browser, Node version). Screenshots/Logs: Attach screenshots or logs to help with debugging.
-License By contributing, you agree that your contributions will be licensed under the same [MIT License](link to license) that covers the Custos project.
-We’re excited to have you contribute to Custos and look forward to building something amazing together!
+There are several ways to contribute to Custos-Starknet:
+
+- **Report Bugs**: Open an issue to report bugs.
+- **Suggest Features**: Open an issue to suggest new features.
+- **Fix Bugs or Implement Features**: Check open issues and submit a pull request with your contributions.
+- **Improve Documentation**: Enhancing documentation is always welcome.
+
+---
+
+## 3. Setting Up the Project
+
+To contribute, you need to set up the project locally:
+
+1. Fork the repository.
+2. Clone your fork:
+   ```bash
+   git clone https://github.com/your-username/custos-starknet.git
+   ```
+3. Navigate to the project directory:
+   ```bash
+   cd custos-starknet
+   ```
+4. Install Scarb if you haven't already: [Scarb Installation Guide](https://docs.swmansion.com/scarb/docs/getting_started/installation).
+5. Install dependencies:
+   ```bash
+   scarb build
+   ```
+6. Run tests:
+   ```bash
+   scarb test
+   ```
+7. Make sure everything works before making changes.
+
+---
+
+## 4. Branching and Commit Guidelines
+
+- **Branch Naming**: 
+  - `feature/your-feature-name` for new features.
+  - `bugfix/issue-number-description` for bug fixes.
+
+- **Commit Messages**:
+  - Use clear, concise messages that describe what the commit does.
+  - Example:
+    ```
+    feat: add new collateralization feature for loan contracts
+    ```
+
+---
+
+## 5. Pull Requests
+
+- Ensure your branch is up to date with the main branch.
+- Push your changes and open a PR against `master`.
+- Provide a detailed description of your changes.
+- Link any relevant issues.
+
+---
+
+## 6. Coding Standards
+
+- **Cairo Code**: Follow the [Cairo documentation](https://www.cairo-lang.org/docs/) and best practices.
+- **Testing**: Write tests for your code and ensure all tests pass before submitting a PR.
+
+---
+
+## 7. Issue Reporting
+
+When reporting issues:
+
+- Use descriptive titles.
+- Provide as much detail as possible.
+- Include relevant environment information.
+
+---
+
+## 8. Resources
+
+- [Cairo Documentation](https://www.cairo-lang.org/docs/)
+- [Scarb Documentation](https://docs.swmansion.com/scarb/)
