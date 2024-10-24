@@ -1,31 +1,32 @@
-use starknet::ContractAddress;
-
-#[starknet::interface]
-pub trait IAgreement<TContractState> {
-    fn create_agreement(
-        ref self: TContractState,
-        content: ByteArray,
-        secondPartyAddress: ContractAddress,
-        firstPartyValidId: ByteArray,
-        secondPartyValidId: ByteArray
-    ) -> u256;
-    fn get_agreement_details(self: @TContractState, id: u256) -> Agreement::LegalAgreement;
-    fn get_all_agreements(self: @TContractState) -> Array<Agreement::LegalAgreement>;
-    fn get_user_agreements(
-        self: @TContractState, address: ContractAddress
-    ) -> Array<Agreement::LegalAgreement>;
-    fn validate_agreement(ref self: TContractState, agreementId: u256);
-}
-
 #[starknet::contract]
 pub mod Agreement {
-    use starknet::ContractAddress;
-    use starknet::{get_caller_address, storage_access};
+    use UpgradeableComponent::InternalTrait;
+    use openzeppelin::access::ownable::OwnableComponent;
+    use openzeppelin::upgrades::{UpgradeableComponent, interface::IUpgradeable};
+
+    use starknet::{
+        get_caller_address, ContractAddress, ClassHash,
+        storage::{Map, StorageMapReadAccess, StoragePointerWriteAccess, StoragePathEntry},
+    };
+    use crate::interfaces::IAgreement;
+
+    component!(path: OwnableComponent, storage: ownable, event: OwnableEvent);
+    component!(path: UpgradeableComponent, storage: upgradeable, event: UpgradeableEvent);
+
+    #[abi(embed_v0)]
+    impl OwnableMixinImpl = OwnableComponent::OwnableMixinImpl<ContractState>;
+
+    impl OwnableInternalImpl = OwnableComponent::InternalImpl<ContractState>;
+    impl UpgradeableInternalImpl = UpgradeableComponent::InternalImpl<ContractState>;
 
     #[storage]
     struct Storage {
+        #[substorage(v0)]
+        ownable: OwnableComponent::Storage,
+        #[substorage(v0)]
+        upgradeable: UpgradeableComponent::Storage,
         agreement_count: u256,
-        agreements: LegacyMap<u256, LegalAgreement>,
+        agreements: Map<u256, LegalAgreement>,
         admin: ContractAddress,
     }
 
@@ -43,6 +44,10 @@ pub mod Agreement {
     #[event]
     #[derive(Drop, starknet::Event)]
     enum Event {
+        #[flat]
+        OwnableEvent: OwnableComponent::Event,
+        #[flat]
+        UpgradeableEvent: UpgradeableComponent::Event,
         AgreementCreated: AgreementCreated,
         AgreementSigned: AgreementSigned,
         AgreementValid: AgreementValid,
@@ -72,17 +77,18 @@ pub mod Agreement {
 
     #[constructor]
     fn constructor(ref self: ContractState, admin: ContractAddress) {
-        self.admin.write(admin)
+        self.admin.write(admin);
+        self.ownable.initializer(admin);
     }
 
     #[abi(embed_v0)]
-    impl AgreementContract of super::IAgreement<ContractState> {
+    impl AgreementImpl of IAgreement<ContractState> {
         fn create_agreement(
             ref self: ContractState,
             content: ByteArray,
-            secondPartyAddress: ContractAddress,
-            firstPartyValidId: ByteArray,
-            secondPartyValidId: ByteArray
+            second_party_address: ContractAddress,
+            first_party_valid_id: ByteArray,
+            second_party_valid_id: ByteArray
         ) -> u256 {
             let agreement_id = self.agreement_count.read() + 1;
             let caller_address = get_caller_address();
@@ -90,40 +96,38 @@ pub mod Agreement {
             let newagreement = LegalAgreement {
                 creator: caller_address,
                 content,
-                second_party_address: secondPartyAddress,
-                first_party_valid_id: firstPartyValidId,
-                second_party_valid_id: secondPartyValidId,
+                second_party_address,
+                first_party_valid_id,
+                second_party_valid_id,
                 signed: true,
                 validate_signature: false,
             };
 
-            self.agreements.write(agreement_id, newagreement);
+            self.agreements.entry(agreement_id).write(newagreement);
             self.agreement_count.write(self.agreement_count.read() + 1);
 
             self.emit(AgreementCreated { agreement_id, creator: caller_address, });
             self.emit(AgreementSigned { agreement_id: agreement_id, signer: caller_address, });
 
-            return agreement_id;
+            agreement_id
         }
 
         fn get_agreement_details(self: @ContractState, id: u256) -> LegalAgreement {
-            return self.agreements.read(id);
+            self.agreements.entry(id).read()
         }
 
         fn get_all_agreements(self: @ContractState) -> Array<LegalAgreement> {
-            // assert(get_caller_address() == self.admin.read(), 'Not Admin'); 
             let mut all_agreements: Array<LegalAgreement> = ArrayTrait::new();
 
             let mut count = self.agreement_count.read();
             let mut counter = 1;
 
-            while counter < count
-                + 1 {
-                    all_agreements.append(self.agreements.read(counter));
-                    counter +=1;
-                };
+            while counter < count + 1 {
+                all_agreements.append(self.agreements.entry(counter).read());
+                counter += 1;
+            };
 
-            return all_agreements;
+            all_agreements
         }
 
         fn get_user_agreements(
@@ -133,26 +137,25 @@ pub mod Agreement {
             let mut user_agreements: Array<LegalAgreement> = ArrayTrait::new();
             let mut i = 1;
 
-            while i < count
-                + 1 {
-                    let agreement = self.agreements.read(i);
-                    if agreement.creator == address || agreement.second_party_address == address {
-                        user_agreements.append(agreement);
-                    }
-                    i += 1;
-                };
+            while i < count + 1 {
+                let agreement = self.agreements.entry(i).read();
+                if agreement.creator == address || agreement.second_party_address == address {
+                    user_agreements.append(agreement);
+                }
+                i += 1;
+            };
             user_agreements
         }
 
         fn validate_agreement(ref self: ContractState, agreementId: u256) {
-            let mut agreement = self.agreements.read(agreementId);
+            let mut agreement = self.agreements.entry(agreementId).read();
             let caller_address = get_caller_address();
             assert(caller_address == agreement.second_party_address, 'unauthorized caller');
 
             if caller_address == agreement.second_party_address {
                 agreement.validate_signature = true;
 
-                self.agreements.write(agreementId, self.agreements.read(agreementId));
+                self.agreements.entry(agreementId).write(self.agreements.read(agreementId));
             };
             self
                 .emit(
@@ -162,6 +165,14 @@ pub mod Agreement {
                         second_party_id: agreement.second_party_valid_id,
                     }
                 );
+        }
+    }
+
+    #[abi(embed_v0)]
+    impl UpgradeableImpl of IUpgradeable<ContractState> {
+        fn upgrade(ref self: ContractState, new_class_hash: ClassHash) {
+            self.ownable.assert_only_owner();
+            self.upgradeable.upgrade(new_class_hash);
         }
     }
 }

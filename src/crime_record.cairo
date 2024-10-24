@@ -1,22 +1,17 @@
-use starknet::ContractAddress;
-
-#[starknet::interface]
-pub trait ICrimeWitness<TContractState> {
-    fn crime_record(ref self: TContractState, uri: ByteArray, data: Span<felt252>) -> bool;
-    fn get_token_uri(self: @TContractState, id: u256) -> ByteArray;
-    fn get_all_user_uploads(self: @TContractState, user: ContractAddress) -> Array<u256>;
-}
-
 #[starknet::contract]
 pub mod CrimeRecord {
-    use starknet::{ContractAddress, get_caller_address};
+    use crate::interfaces::ICrimeWitness;
+
+    use starknet::{
+        ContractAddress, get_caller_address, ClassHash,
+        storage::{Map, StoragePointerWriteAccess, StoragePathEntry}
+    };
     use openzeppelin::access::ownable::OwnableComponent;
     use openzeppelin::introspection::src5::SRC5Component;
     use openzeppelin::token::erc721::ERC721Component;
     use openzeppelin::token::erc721::ERC721HooksEmptyImpl;
     use openzeppelin::upgrades::UpgradeableComponent;
     use openzeppelin::upgrades::interface::IUpgradeable;
-    use starknet::ClassHash;
 
     component!(path: ERC721Component, storage: erc721, event: ERC721Event);
     component!(path: SRC5Component, storage: src5, event: SRC5Event);
@@ -43,8 +38,8 @@ pub mod CrimeRecord {
         #[substorage(v0)]
         upgradeable: UpgradeableComponent::Storage,
         token_id: u256,
-        token_uri: LegacyMap::<u256, ByteArray>,
-        owners: LegacyMap::<u256, ContractAddress>,
+        token_uri: Map::<u256, ByteArray>,
+        owners: Map::<u256, ContractAddress>,
     }
 
     #[event]
@@ -86,7 +81,7 @@ pub mod CrimeRecord {
     }
 
     #[abi(embed_v0)]
-    impl CrimeWitness of super::ICrimeWitness<ContractState> {
+    impl CrimeWitness of ICrimeWitness<ContractState> {
         fn crime_record(ref self: ContractState, uri: ByteArray, data: Span<felt252>) -> bool {
             let user = get_caller_address();
             let id_count = self.token_id.read() + 1;
@@ -97,7 +92,7 @@ pub mod CrimeRecord {
         }
 
         fn get_token_uri(self: @ContractState, id: u256) -> ByteArray {
-            self.token_uri.read(id)
+            self.token_uri.entry(id).read()
         }
 
         fn get_all_user_uploads(self: @ContractState, user: ContractAddress) -> Array<u256> {
@@ -105,14 +100,13 @@ pub mod CrimeRecord {
             let counter = self.token_id.read();
             let mut index: u256 = 1;
 
-            while index < counter
-                + 1 {
-                    let owner = self.erc721.owner_of(index);
-                    if owner == user {
-                        user_ids.append(index)
-                    };
-                    index += 1;
+            while index < counter + 1 {
+                let owner = self.erc721.owner_of(index);
+                if owner == user {
+                    user_ids.append(index)
                 };
+                index += 1;
+            };
             user_ids
         }
     }
@@ -120,9 +114,9 @@ pub mod CrimeRecord {
     #[generate_trait]
     impl Private of PrivateTrait {
         fn set_token_uri(ref self: ContractState, id: u256, uri: ByteArray) -> bool {
-            self.token_uri.write(id, uri);
-            let uri = self.token_uri.read(id);
-            self.emit(URI { id: id, uri: uri, msg: 'URI SET' });
+            self.token_uri.entry(id).write(uri);
+            let uri = self.token_uri.entry(id).read();
+            self.emit(URI { id, uri, msg: 'URI SET' });
             true
         }
     }
