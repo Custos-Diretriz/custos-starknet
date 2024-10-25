@@ -1,13 +1,10 @@
 use snforge_std::{
-    declare, ContractClassTrait, DeclareResultTrait, DeclareResult, start_cheat_caller_address,
+    declare, ContractClassTrait, DeclareResultTrait, start_cheat_caller_address,
     stop_cheat_caller_address,
 };
 use starknet::{ContractAddress};
 use starknet::contract_address::contract_address_const;
-use starknet::syscalls::deploy_syscall;
-use core::fmt::{Display, Formatter, Error};
 
-use custos_smart_contracts::agreement::Agreement;
 use custos_smart_contracts::interfaces::{IAgreementDispatcher, IAgreementDispatcherTrait};
 
 fn setup_agreement() -> (ContractAddress, IAgreementDispatcher) {
@@ -93,56 +90,78 @@ fn test_get_all_agreements() {
     assert!(all_agreements.len() == 2, "wrong agreements count");
 }
 // Test for getting user agreements
-// #[test]
-// fn test_get_user_agreements() {
-//     let contract = declare("Agreement").unwrap();
-//     let (contract_address, _) = contract.deploy(@array![]).unwrap();
-//     let dispatcher = IAgreementDispatcher { contract_address };
-//     let _owner: ContractAddress = contract_address_const::<'owner'>();
-//     let content1: felt252 = '12345';
-//     let second_party_address1: ContractAddress = contract_address_const::<'second_party1'>();
-//     let first_party_valid_id1: felt252 = '67890';
-//     let second_party_valid_id1: felt252 = '54321';
+#[test]
+fn test_get_user_agreements() {
+    let (agreement_contract_address, agreement_contract) = setup_agreement();
 
-//     let content2: felt252 = 98765;
-//     let second_party_address2: ContractAddress = contract_address_const::<'second_party2'>();
-//     let first_party_valid_id2: felt252 = '43210';
-//     let second_party_valid_id2: felt252 = '56789';
+    let user: ContractAddress = contract_address_const::<'user'>();
 
-//     dispatcher
-//         .createAgreement(
-//             content1, second_party_address1, first_party_valid_id1, second_party_valid_id1
-//         );
+    let content1 = "12345";
+    let second_party_address1: ContractAddress = contract_address_const::<'second_party1'>();
+    let first_party_valid_id1 = "67890";
+    let second_party_valid_id1 = "54321";
 
-//     dispatcher
-//         .createAgreement(
-//             content2, second_party_address2, first_party_valid_id2, second_party_valid_id2
-//         );
+    let content2 = "98765";
+    let second_party_address2: ContractAddress = contract_address_const::<'second_party2'>();
+    let first_party_valid_id2 = "43210";
+    let second_party_valid_id2 = "56789";
 
-//     let user_agreements = dispatcher.getUserAgreements();
-//     assert_eq!(user_agreements.len(), 2);
-// }
+    start_cheat_caller_address(agreement_contract_address, user);
+    agreement_contract
+        .create_agreement(
+            content1, second_party_address1, first_party_valid_id1, second_party_valid_id1
+        );
 
-// Test for signing an agreement
-// #[test]
-// fn test_sign_agreement() {
-//     let contract = declare("Agreement").unwrap();
-//     let (contract_address, _) = contract.deploy(@array![]).unwrap();
-//     let dispatcher = IAgreementDispatcher { contract_address };
-//     let content: felt252 = '12345';
-//     let second_party_address: ContractAddress = contract_address_const::<'second_party'>();
-//     let first_party_valid_id: felt252 = '67890';
-//     let second_party_valid_id: felt252 = '54321';
+    agreement_contract
+        .create_agreement(
+            content2, second_party_address2, first_party_valid_id2, second_party_valid_id2
+        );
 
-//     let agreement_id = dispatcher
-//         .createAgreement(
-//             content, second_party_address, first_party_valid_id, second_party_valid_id
-//         );
+    let user_agreements = agreement_contract.get_user_agreements(user);
+    stop_cheat_caller_address(agreement_contract_address);
 
-//     dispatcher.signAgreement(agreement_id);
-//     let signed_agreement = dispatcher.getAgreementDetails(agreement_id);
-// assert_eq!(signed_agreement.signed, true);
-// assert_eq!(signed_agreement.validate_signature, false);
-// }
+    assert!(user_agreements.len() == 2, "wrong user agreement length");
+}
+// Test for validating an agreement should when called by a wrong caller
+#[test]
+#[should_panic(expected: 'unauthorized caller')]
+fn test_validate_agreement_should_panic_on_wrong_caller() {
+    let (_, agreement_contract) = setup_agreement();
 
+    let content = "12345";
+    let second_party_address: ContractAddress = contract_address_const::<0x123626789>();
+    let first_party_valid_id = "67890";
+    let second_party_valid_id = "54321";
+
+    let agreement_id = agreement_contract
+        .create_agreement(
+            content, second_party_address, first_party_valid_id, second_party_valid_id
+        );
+
+    agreement_contract.validate_agreement(agreement_id);
+}
+
+// Test for validating an agreement: should be successful
+#[test]
+fn test_validate_agreement() {
+    let (agreement_contract_address, agreement_contract) = setup_agreement();
+
+    let content = "12345";
+    let second_party_address: ContractAddress = contract_address_const::<0x123626789>();
+    let first_party_valid_id = "67890";
+    let second_party_valid_id = "54321";
+
+    let agreement_id = agreement_contract
+        .create_agreement(
+            content, second_party_address, first_party_valid_id, second_party_valid_id
+        );
+
+    start_cheat_caller_address(agreement_contract_address, second_party_address);
+    agreement_contract.validate_agreement(agreement_id);
+    stop_cheat_caller_address(agreement_contract_address);
+
+    let validated_agreement = agreement_contract.get_agreement_details(agreement_id);
+
+    assert!(validated_agreement.validate_signature == true, "wrong signature value");
+}
 

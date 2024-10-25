@@ -153,10 +153,9 @@ pub mod Agreement {
             assert(caller_address == agreement.second_party_address, 'unauthorized caller');
 
             if caller_address == agreement.second_party_address {
-                agreement.validate_signature = true;
-
-                self.agreements.entry(agreementId).write(self.agreements.read(agreementId));
+                self.agreements.entry(agreementId).validate_signature.write(true);
             };
+
             self
                 .emit(
                     AgreementValid {
