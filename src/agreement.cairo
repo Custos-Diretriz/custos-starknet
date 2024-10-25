@@ -148,7 +148,7 @@ pub mod Agreement {
         }
 
         fn validate_agreement(ref self: ContractState, agreementId: u256) {
-            let mut agreement = self.agreements.entry(agreementId).read();
+            let agreement = self.agreements.entry(agreementId).read();
             let caller_address = get_caller_address();
             assert(caller_address == agreement.second_party_address, 'unauthorized caller');
 
