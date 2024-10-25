@@ -21,10 +21,22 @@ fn setup_crime_record() -> (ContractAddress, ICrimeWitnessTestDispatcher) {
 #[test]
 fn test_constructor() {
     let (_, crime_record_contract) = setup_crime_record();
-    let owner: ContractAddress = starknet::contract_address_const::<0x123626789>();
+    let owner: ContractAddress = contract_address_const::<0x123626789>();
 
     assert!(crime_record_contract.owner() == owner, "wrong owner");
     assert!(crime_record_contract.name() == "CrimeRecords", "wrong token name");
     assert!(crime_record_contract.symbol() == "CRD", "wrong token symbol");
+}
+
+#[test]
+fn test_crime_record_success() {
+    let (_, crime_record_contract) = setup_crime_record();
+
+    let uri: ByteArray = "QmbEgRoiC7SG9d6oY5uDpkKx8BikE3vMWYi6M75Kns68N6";
+
+    let data = array![1234, 5678, 9101112].span();
+
+    let new_crime_record = crime_record_contract.crime_record(uri, data);
+    // assert!(crime_record, "crime record failed");
 }
 

@@ -6,7 +6,7 @@ pub mod Agreement {
 
     use starknet::{
         get_caller_address, ContractAddress, ClassHash,
-        storage::{Map, StorageMapReadAccess, StoragePointerWriteAccess, StoragePathEntry},
+        storage::{Map, StoragePointerWriteAccess, StoragePathEntry},
     };
     use crate::interfaces::IAgreement;
 
