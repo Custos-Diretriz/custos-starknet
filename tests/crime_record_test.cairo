@@ -1,4 +1,7 @@
-use snforge_std::{declare, ContractClassTrait, DeclareResultTrait};
+use snforge_std::{
+    declare, ContractClassTrait, DeclareResultTrait, start_cheat_caller_address,
+    stop_cheat_caller_address
+};
 use starknet::{ContractAddress, contract_address_const};
 use custos_smart_contracts::interfaces::{
     ICrimeWitnessTestDispatcher, ICrimeWitnessTestDispatcherTrait
@@ -18,6 +21,14 @@ fn setup_crime_record() -> (ContractAddress, ICrimeWitnessTestDispatcher) {
     (contract_address, dispatcher)
 }
 
+fn deploy_token_receiver() -> ContractAddress {
+    let contract = declare("MyERC721Receiver").unwrap().contract_class();
+
+    let (contract_address, _) = contract.deploy(@ArrayTrait::new()).unwrap();
+
+    contract_address
+}
+
 #[test]
 fn test_constructor() {
     let (_, crime_record_contract) = setup_crime_record();
@@ -30,13 +41,17 @@ fn test_constructor() {
 
 #[test]
 fn test_crime_record_success() {
-    let (_, crime_record_contract) = setup_crime_record();
+    let (crime_record_address, crime_record_contract) = setup_crime_record();
+    let token_receiver = deploy_token_receiver();
 
     let uri: ByteArray = "QmbEgRoiC7SG9d6oY5uDpkKx8BikE3vMWYi6M75Kns68N6";
-
     let data = array![1234, 5678, 9101112].span();
 
+    start_cheat_caller_address(crime_record_address, token_receiver);
     let new_crime_record = crime_record_contract.crime_record(uri, data);
-    // assert!(crime_record, "crime record failed");
+
+    assert!(new_crime_record, "crime record failed");
+
+    stop_cheat_caller_address(crime_record_address);
 }
 
