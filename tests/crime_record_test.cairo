@@ -40,7 +40,7 @@ fn test_constructor() {
 }
 
 #[test]
-fn test_crime_record_success() {
+fn test_crime_record() {
     let (crime_record_address, crime_record_contract) = setup_crime_record();
     let token_receiver = deploy_token_receiver();
 
@@ -51,6 +51,46 @@ fn test_crime_record_success() {
     let new_crime_record = crime_record_contract.crime_record(uri, data);
 
     assert!(new_crime_record, "crime record failed");
+
+    stop_cheat_caller_address(crime_record_address);
+}
+
+#[test]
+fn test_get_token_uri() {
+    let (crime_record_address, crime_record_contract) = setup_crime_record();
+    let token_receiver = deploy_token_receiver();
+
+    let uri: ByteArray = "QmbEgRoiC7SG9d6oY5uDpkKx8BikE3vMWYi6M75Kns68N6";
+    let data = array![1234, 5678, 9101112].span();
+
+    start_cheat_caller_address(crime_record_address, token_receiver);
+    crime_record_contract.crime_record(uri.clone(), data);
+
+    let crime_uri = crime_record_contract.get_token_uri(1);
+
+    assert!(crime_uri == uri, "wrong crime record uri");
+
+    stop_cheat_caller_address(crime_record_address);
+}
+
+#[test]
+fn test_get_all_user_uploads() {
+    let (crime_record_address, crime_record_contract) = setup_crime_record();
+    let token_receiver = deploy_token_receiver();
+
+    let uri1: ByteArray = "QmbEgRoiC7SG9d6oY5uDpkKx8BikE3vMWYi6M75Kns68N6";
+    let data1 = array![1234, 5678, 9101112].span();
+
+    let uri2: ByteArray = "QmbEgRoiC7SG9d6oY5uDpkKx8BikE3vMWYi6M75Kns68G8";
+    let data2 = array![2234, 1122, 556611].span();
+
+    start_cheat_caller_address(crime_record_address, token_receiver);
+    crime_record_contract.crime_record(uri1.clone(), data1);
+    crime_record_contract.crime_record(uri2.clone(), data2);
+
+    let all_user_uploads = crime_record_contract.get_all_user_uploads(token_receiver);
+
+    assert!(all_user_uploads.len() == 2, "wrong user upload count");
 
     stop_cheat_caller_address(crime_record_address);
 }
