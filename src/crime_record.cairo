@@ -1,5 +1,6 @@
 #[starknet::contract]
 pub mod CrimeRecord {
+    use openzeppelin_access::ownable::interface::IOwnable;
     use crate::interfaces::ICrimeWitness;
 
     use starknet::{
@@ -20,6 +21,7 @@ pub mod CrimeRecord {
 
     #[abi(embed_v0)]
     impl ERC721MixinImpl = ERC721Component::ERC721MixinImpl<ContractState>;
+
     #[abi(embed_v0)]
     impl OwnableMixinImpl = OwnableComponent::OwnableMixinImpl<ContractState>;
 
