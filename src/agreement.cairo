@@ -32,13 +32,13 @@ pub mod Agreement {
 
     #[derive(Drop, Serde, starknet::Store)]
     pub struct LegalAgreement {
-        creator: ContractAddress,
-        content: ByteArray,
-        second_party_address: ContractAddress,
-        first_party_valid_id: ByteArray,
-        second_party_valid_id: ByteArray,
-        signed: bool,
-        validate_signature: bool,
+        pub creator: ContractAddress,
+        pub content: ByteArray,
+        pub second_party_address: ContractAddress,
+        pub first_party_valid_id: ByteArray,
+        pub second_party_valid_id: ByteArray,
+        pub signed: bool,
+        pub validate_signature: bool,
     }
 
     #[event]

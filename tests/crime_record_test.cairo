@@ -1,10 +1,8 @@
 use snforge_std::{declare, ContractClassTrait};
-use starknet::{ContractAddress, contract_address_const, SysCallResultTrait};
+use starknet::{ContractAddress, contract_address_const};
 use starknet::syscalls::deploy_syscall;
-use custos_smart_contracts::crime_record::{
-    CrimeRecord, ICrimeWitnessDispatcher, ICrimeWitnessDispatcherTrait
-};
-
+use custos_smart_contracts::crime_record::CrimeRecord;
+use custos_smart_contracts::interfaces::{ICrimeWitnessDispatcher, ICrimeWitnessDispatcherTrait};
 // // fn deploy_crime_recorder() -> (ICrimeWitnessDispatcher, ContractAddress) {
 // //     let contract = declare("CrimeRecord").unwrap();
 // //     let owner: ContractAddress = contract_address_const::<'owner'>();
@@ -28,3 +26,5 @@ use custos_smart_contracts::crime_record::{
 //     let dispatcher = setup_recorder();
 //     assert(dispatcher.owner(), owner());
 // }
+
+
