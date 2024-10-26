@@ -1,30 +1,97 @@
-use snforge_std::{declare, ContractClassTrait};
-use starknet::{ContractAddress, contract_address_const, SysCallResultTrait};
-use starknet::syscalls::deploy_syscall;
-use custos_smart_contracts::crime_record::{
-    CrimeRecord, ICrimeWitnessDispatcher, ICrimeWitnessDispatcherTrait
+use snforge_std::{
+    declare, ContractClassTrait, DeclareResultTrait, start_cheat_caller_address,
+    stop_cheat_caller_address
+};
+use starknet::{ContractAddress, contract_address_const};
+use custos_smart_contracts::interfaces::{
+    ICrimeWitnessTestDispatcher, ICrimeWitnessTestDispatcherTrait
 };
 
-// // fn deploy_crime_recorder() -> (ICrimeWitnessDispatcher, ContractAddress) {
-// //     let contract = declare("CrimeRecord").unwrap();
-// //     let owner: ContractAddress = contract_address_const::<'owner'>();
-// //     let constructor_calldata = array![owner.into()];
-// //     let (contract_address, _) = contract.deploy(@constructor_calldata).unwrap();
-// //     let dispatcher = ICrimeWitnessDispatcher {contract_address};
-// //     (dispatcher, contract_address)
-// // }
+fn setup_crime_record() -> (ContractAddress, ICrimeWitnessTestDispatcher) {
+    let owner: ContractAddress = starknet::contract_address_const::<0x123626789>();
 
-// fn setup_recorder() -> ICrimeWitnessDispatcher {
-//     let owner: ContractAddress = contract_address_const::<'owner'>();
-//     let (address, _) = deploy_syscall(
-//         CrimeRecord::TEST_CLASS_HASH.try_into().unwrap(), 0, array![owner.into()].span(), false
-//     )
-//         .unwrap_syscall();
-//     ICrimeWitnessDispatcher { contract_address: address }
-// }
+    let mut constructor_calldata = ArrayTrait::new();
+    constructor_calldata.append(owner.into());
 
-// #[test]
-// fn test_constructor() {
-//     let dispatcher = setup_recorder();
-//     assert(dispatcher.owner(), owner());
-// }
+    let contract = declare("CrimeRecord").unwrap().contract_class();
+    let (contract_address, _) = contract.deploy(@constructor_calldata).unwrap();
+
+    let dispatcher = ICrimeWitnessTestDispatcher { contract_address };
+
+    (contract_address, dispatcher)
+}
+
+fn deploy_token_receiver() -> ContractAddress {
+    let contract = declare("MyERC721Receiver").unwrap().contract_class();
+
+    let (contract_address, _) = contract.deploy(@ArrayTrait::new()).unwrap();
+
+    contract_address
+}
+
+#[test]
+fn test_constructor() {
+    let (_, crime_record_contract) = setup_crime_record();
+    let owner: ContractAddress = contract_address_const::<0x123626789>();
+
+    assert!(crime_record_contract.owner() == owner, "wrong owner");
+    assert!(crime_record_contract.name() == "CrimeRecords", "wrong token name");
+    assert!(crime_record_contract.symbol() == "CRD", "wrong token symbol");
+}
+
+#[test]
+fn test_crime_record() {
+    let (crime_record_address, crime_record_contract) = setup_crime_record();
+    let token_receiver = deploy_token_receiver();
+
+    let uri: ByteArray = "QmbEgRoiC7SG9d6oY5uDpkKx8BikE3vMWYi6M75Kns68N6";
+    let data = array![1234, 5678, 9101112].span();
+
+    start_cheat_caller_address(crime_record_address, token_receiver);
+    let new_crime_record = crime_record_contract.crime_record(uri, data);
+
+    assert!(new_crime_record, "crime record failed");
+
+    stop_cheat_caller_address(crime_record_address);
+}
+
+#[test]
+fn test_get_token_uri() {
+    let (crime_record_address, crime_record_contract) = setup_crime_record();
+    let token_receiver = deploy_token_receiver();
+
+    let uri: ByteArray = "QmbEgRoiC7SG9d6oY5uDpkKx8BikE3vMWYi6M75Kns68N6";
+    let data = array![1234, 5678, 9101112].span();
+
+    start_cheat_caller_address(crime_record_address, token_receiver);
+    crime_record_contract.crime_record(uri.clone(), data);
+
+    let crime_uri = crime_record_contract.get_token_uri(1);
+
+    assert!(crime_uri == uri, "wrong crime record uri");
+
+    stop_cheat_caller_address(crime_record_address);
+}
+
+#[test]
+fn test_get_all_user_uploads() {
+    let (crime_record_address, crime_record_contract) = setup_crime_record();
+    let token_receiver = deploy_token_receiver();
+
+    let uri1: ByteArray = "QmbEgRoiC7SG9d6oY5uDpkKx8BikE3vMWYi6M75Kns68N6";
+    let data1 = array![1234, 5678, 9101112].span();
+
+    let uri2: ByteArray = "QmbEgRoiC7SG9d6oY5uDpkKx8BikE3vMWYi6M75Kns68G8";
+    let data2 = array![2234, 1122, 556611].span();
+
+    start_cheat_caller_address(crime_record_address, token_receiver);
+    crime_record_contract.crime_record(uri1.clone(), data1);
+    crime_record_contract.crime_record(uri2.clone(), data2);
+
+    let all_user_uploads = crime_record_contract.get_all_user_uploads(token_receiver);
+
+    assert!(all_user_uploads.len() == 2, "wrong user upload count");
+
+    stop_cheat_caller_address(crime_record_address);
+}
+

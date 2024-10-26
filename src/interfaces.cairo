@@ -25,3 +25,16 @@ pub trait ICrimeWitness<TContractState> {
     fn get_token_uri(self: @TContractState, id: u256) -> ByteArray;
     fn get_all_user_uploads(self: @TContractState, user: ContractAddress) -> Array<u256>;
 }
+
+#[starknet::interface]
+pub trait ICrimeWitnessTest<TContractState> {
+    fn crime_record(ref self: TContractState, uri: ByteArray, data: Span<felt252>) -> bool;
+    fn get_token_uri(self: @TContractState, id: u256) -> ByteArray;
+    fn get_all_user_uploads(self: @TContractState, user: ContractAddress) -> Array<u256>;
+
+    fn owner(self: @TContractState) -> ContractAddress;
+
+    fn name(self: @TContractState) -> ByteArray;
+    fn symbol(self: @TContractState) -> ByteArray;
+    fn token_uri(self: @TContractState, token_id: u256) -> ByteArray;
+}

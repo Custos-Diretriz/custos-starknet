@@ -20,6 +20,7 @@ pub mod CrimeRecord {
 
     #[abi(embed_v0)]
     impl ERC721MixinImpl = ERC721Component::ERC721MixinImpl<ContractState>;
+
     #[abi(embed_v0)]
     impl OwnableMixinImpl = OwnableComponent::OwnableMixinImpl<ContractState>;
 
@@ -85,9 +86,13 @@ pub mod CrimeRecord {
         fn crime_record(ref self: ContractState, uri: ByteArray, data: Span<felt252>) -> bool {
             let user = get_caller_address();
             let id_count = self.token_id.read() + 1;
+
             self.set_token_uri(id_count, uri);
+
             self.erc721.safe_mint(user, id_count, data);
+
             self.token_id.write(id_count);
+
             true
         }
 
@@ -115,8 +120,11 @@ pub mod CrimeRecord {
     impl Private of PrivateTrait {
         fn set_token_uri(ref self: ContractState, id: u256, uri: ByteArray) -> bool {
             self.token_uri.entry(id).write(uri);
+
             let uri = self.token_uri.entry(id).read();
+
             self.emit(URI { id, uri, msg: 'URI SET' });
+
             true
         }
     }

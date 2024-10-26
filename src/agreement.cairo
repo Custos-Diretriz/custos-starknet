@@ -6,7 +6,7 @@ pub mod Agreement {
 
     use starknet::{
         get_caller_address, ContractAddress, ClassHash,
-        storage::{Map, StorageMapReadAccess, StoragePointerWriteAccess, StoragePathEntry},
+        storage::{Map, StoragePointerWriteAccess, StoragePathEntry},
     };
     use crate::interfaces::IAgreement;
 
@@ -32,13 +32,13 @@ pub mod Agreement {
 
     #[derive(Drop, Serde, starknet::Store)]
     pub struct LegalAgreement {
-        creator: ContractAddress,
-        content: ByteArray,
-        second_party_address: ContractAddress,
-        first_party_valid_id: ByteArray,
-        second_party_valid_id: ByteArray,
-        signed: bool,
-        validate_signature: bool,
+        pub creator: ContractAddress,
+        pub content: ByteArray,
+        pub second_party_address: ContractAddress,
+        pub first_party_valid_id: ByteArray,
+        pub second_party_valid_id: ByteArray,
+        pub signed: bool,
+        pub validate_signature: bool,
     }
 
     #[event]
@@ -148,15 +148,14 @@ pub mod Agreement {
         }
 
         fn validate_agreement(ref self: ContractState, agreementId: u256) {
-            let mut agreement = self.agreements.entry(agreementId).read();
+            let agreement = self.agreements.entry(agreementId).read();
             let caller_address = get_caller_address();
             assert(caller_address == agreement.second_party_address, 'unauthorized caller');
 
             if caller_address == agreement.second_party_address {
-                agreement.validate_signature = true;
-
-                self.agreements.entry(agreementId).write(self.agreements.read(agreementId));
+                self.agreements.entry(agreementId).validate_signature.write(true);
             };
+
             self
                 .emit(
                     AgreementValid {
