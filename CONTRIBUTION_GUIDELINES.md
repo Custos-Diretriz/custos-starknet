@@ -5,13 +5,16 @@ Thank you for your interest in contributing to the Custos-Starknet project! This
 ## Table of Contents
 1. [Code of Conduct](#code-of-conduct)
 2. [How to Contribute](#how-to-contribute)
-3. [Setting Up the Project](#setting-up-the-project)
-4. [Branching and Commit Guidelines](#branching-and-commit-guidelines)
-5. [Pull Requests](#pull-requests)
-6. [Coding Standards](#coding-standards)
-7. [Issue Reporting](#issue-reporting)
-8. [Resources](#resources)
-9. [License](#license)
+3. [Development Environment Setup](#development-environment-setup)
+4. [Project Setup](#project-setup)
+5. [Testing Guidelines](#testing-guidelines)
+6. [Branching and Commit Guidelines](#branching-and-commit-guidelines)
+7. [Pull Requests](#pull-requests)
+8. [Workflow Examples](#workflow-examples)
+9. [Coding Standards](#coding-standards)
+10. [Issue Reporting](#issue-reporting)
+11. [Resources](#resources)
+12. [License](#license)
 
 ---
 
@@ -32,7 +35,38 @@ There are several ways to contribute to Custos-Starknet:
 
 ---
 
-## 3. Setting Up the Project
+## 3. Development Environment Setup
+
+### Prerequisites
+
+i. Rust Installation(required for Scarb)
+
+   ```bash
+   curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+   source $HOME/.cargo/env
+   ```
+
+ii. [Scarb Installation](https://docs.swmansion.com/scarb/download.html)
+- For [macOS/Linux](https://docs.swmansion.com/scarb/download.html#install-via-installation-script):
+   ```bash
+   curl --proto '=https' --tlsv1.2 -sSf https://docs.swmansion.com/scarb/install.sh | sh
+   ```
+- For [Windows](https://docs.swmansion.com/scarb/download.html#windows):
+
+   - Download the installer from [Scarb releases](https://docs.swmansion.com/scarb/download.html#precompiled-packages)
+   - Add Scarb to your system PATH
+
+
+### Development Tools
+1. VS Code Extensions(recommended)
+- Cairo Language Support
+- Scarb Build Tools
+- Better TOML
+
+---
+
+
+## 4. Project Setup
 
 To contribute, you need to set up the project locally:
 
@@ -46,7 +80,7 @@ To contribute, you need to set up the project locally:
    cd custos-starknet
    ```
 4. Install Scarb if you haven't already: [Scarb Installation Guide](https://docs.swmansion.com/scarb/docs/getting_started/installation).
-5. Install dependencies:
+5. Install Project Dependencies:
    ```bash
    scarb build
    ```
@@ -58,7 +92,30 @@ To contribute, you need to set up the project locally:
 
 ---
 
-## 4. Branching and Commit Guidelines
+## 5. Testing Guidelines
+### Running Tests
+
+   ```bash
+   scarb test
+   ```
+
+### Writing Tests
+   ```cairo
+   #[test]
+   fn test_something() {
+      // Arrange
+      // Act
+      // Assert
+   }
+   ```
+
+### Test Naming Convention
+   - Use descriptive names. 
+   - Example: `test_deposit_with_valid_amount_succeeds`
+
+---
+
+## 6. Branching and Commit Guidelines
 
 - **Branch Naming**: 
   - `feature/your-feature-name` for new features.
@@ -67,13 +124,13 @@ To contribute, you need to set up the project locally:
 - **Commit Messages**:
   - Use clear, concise messages that describe what the commit does.
   - Example:
-    ```
+    ```bash
     feat: add new collateralization feature for loan contracts
     ```
 
 ---
 
-## 5. Pull Requests
+## 7. Pull Requests
 
 - Ensure your branch is up to date with the main branch.
 - Push your changes and open a PR against `master`.
@@ -82,14 +139,56 @@ To contribute, you need to set up the project locally:
 
 ---
 
-## 6. Coding Standards
+## 8. Workflow Examples
+
+### Adding a New Feature
+
+1. Create feature branch:
+   ```bash
+   git checkout -b feature/<new-feature-name>
+   ```
+2. Implement feature and tests:
+   ```bash
+   # Write your code 
+   # Add tests
+   scarb test
+   ```
+   
+3. Submit PR:
+   ```bash
+   git add .
+   git commit -m "feat: add new feature description"
+   git push origin feature/<new-feature-name>
+   ```
+
+### Fixing a Bug
+
+1. Create bug fix branch:
+   ```bash
+   git checkout -b bugfix/issue-number-description
+2. Fix and Verify:
+   ```bash
+   # Fix the bug
+   # Add/modify test
+   scarb test
+   ```
+3. Submit PR:
+   ```bash
+   git add .
+   git commit -m "fix: resolve issue description"
+   git push origin bugfix/issue-number-description
+   ```
+
+---
+
+## 9. Coding Standards
 
 - **Cairo Code**: Follow the [Cairo documentation](https://www.cairo-lang.org/docs/) and best practices.
 - **Testing**: Write tests for your code and ensure all tests pass before submitting a PR.
 
 ---
 
-## 7. Issue Reporting
+## 10. Issue Reporting
 
 When reporting issues:
 
@@ -99,7 +198,7 @@ When reporting issues:
 
 ---
 
-## 8. Resources
+## 11. Resources
 
 - [Cairo Documentation](https://www.cairo-lang.org/docs/)
 - [Scarb Documentation](https://docs.swmansion.com/scarb/)
