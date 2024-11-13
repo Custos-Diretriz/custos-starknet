@@ -30,6 +30,7 @@ fn test_create_agreement() {
     let second_party_address: ContractAddress = contract_address_const::<0x123626789>();
     let first_party_valid_id = "67890";
     let second_party_valid_id = "54321";
+    let agreement_title = "Test Agreement";
 
     let caller: ContractAddress = starknet::contract_address_const::<0x100006789>();
 
@@ -39,7 +40,8 @@ fn test_create_agreement() {
             content.clone(),
             second_party_address,
             first_party_valid_id.clone(),
-            second_party_valid_id.clone()
+            second_party_valid_id.clone(),
+            agreement_title.clone()
         );
     stop_cheat_caller_address(agreement_contract_address);
 
@@ -59,6 +61,7 @@ fn test_create_agreement() {
     );
     assert!(agreement_details.signed == true, "wrong signed value");
     assert!(agreement_details.validate_signature == false, "wrong signature value");
+    assert!(agreement_details.agreement_title == agreement_title, "wrong agreement title");
 }
 
 // Test for getting all agreements
@@ -70,20 +73,30 @@ fn test_get_all_agreements() {
     let second_party_address1: ContractAddress = contract_address_const::<'second_party1'>();
     let first_party_valid_id1 = "67890";
     let second_party_valid_id1 = "54321";
+    let agreement_title1 = "Test Agreement 1";
 
     let content2 = "98765";
     let second_party_address2: ContractAddress = contract_address_const::<'second_party2'>();
     let first_party_valid_id2 = "43210";
     let second_party_valid_id2 = "56789";
+    let agreement_title2 = "Test Agreement 2";
 
     agreement_contract
         .create_agreement(
-            content1, second_party_address1, first_party_valid_id1, second_party_valid_id1
+            content1,
+            second_party_address1,
+            first_party_valid_id1,
+            second_party_valid_id1,
+            agreement_title1
         );
 
     agreement_contract
         .create_agreement(
-            content2, second_party_address2, first_party_valid_id2, second_party_valid_id2
+            content2,
+            second_party_address2,
+            first_party_valid_id2,
+            second_party_valid_id2,
+            agreement_title2
         );
 
     let all_agreements = agreement_contract.get_all_agreements();
@@ -100,21 +113,31 @@ fn test_get_user_agreements() {
     let second_party_address1: ContractAddress = contract_address_const::<'second_party1'>();
     let first_party_valid_id1 = "67890";
     let second_party_valid_id1 = "54321";
+    let agreement_title1 = "Test Agreement 1";
 
     let content2 = "98765";
     let second_party_address2: ContractAddress = contract_address_const::<'second_party2'>();
     let first_party_valid_id2 = "43210";
     let second_party_valid_id2 = "56789";
+    let agreement_title2 = "Test Agreement 2";
 
     start_cheat_caller_address(agreement_contract_address, user);
     agreement_contract
         .create_agreement(
-            content1, second_party_address1, first_party_valid_id1, second_party_valid_id1
+            content1,
+            second_party_address1,
+            first_party_valid_id1,
+            second_party_valid_id1,
+            agreement_title1
         );
 
     agreement_contract
         .create_agreement(
-            content2, second_party_address2, first_party_valid_id2, second_party_valid_id2
+            content2,
+            second_party_address2,
+            first_party_valid_id2,
+            second_party_valid_id2,
+            agreement_title2
         );
 
     let user_agreements = agreement_contract.get_user_agreements(user);
@@ -132,10 +155,15 @@ fn test_validate_agreement_should_panic_on_wrong_caller() {
     let second_party_address: ContractAddress = contract_address_const::<0x123626789>();
     let first_party_valid_id = "67890";
     let second_party_valid_id = "54321";
+    let agreement_title = "Test Agreement";
 
     let agreement_id = agreement_contract
         .create_agreement(
-            content, second_party_address, first_party_valid_id, second_party_valid_id
+            content,
+            second_party_address,
+            first_party_valid_id,
+            second_party_valid_id,
+            agreement_title
         );
 
     agreement_contract.validate_agreement(agreement_id);
@@ -150,10 +178,15 @@ fn test_validate_agreement() {
     let second_party_address: ContractAddress = contract_address_const::<0x123626789>();
     let first_party_valid_id = "67890";
     let second_party_valid_id = "54321";
+    let agreement_title = "Test Agreement";
 
     let agreement_id = agreement_contract
         .create_agreement(
-            content, second_party_address, first_party_valid_id, second_party_valid_id
+            content,
+            second_party_address,
+            first_party_valid_id,
+            second_party_valid_id,
+            agreement_title
         );
 
     start_cheat_caller_address(agreement_contract_address, second_party_address);
