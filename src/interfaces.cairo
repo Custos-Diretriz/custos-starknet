@@ -8,7 +8,8 @@ pub trait IAgreement<TContractState> {
         content: ByteArray,
         second_party_address: ContractAddress,
         first_party_valid_id: ByteArray,
-        second_party_valid_id: ByteArray
+        second_party_valid_id: ByteArray,
+        agreement_title: ByteArray,
     ) -> u256;
     fn get_agreement_details(self: @TContractState, id: u256) -> Agreement::LegalAgreement;
     fn get_all_agreements(self: @TContractState) -> Array<Agreement::LegalAgreement>;

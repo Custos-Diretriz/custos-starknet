@@ -5,7 +5,7 @@ pub mod Agreement {
     use openzeppelin::upgrades::{UpgradeableComponent, interface::IUpgradeable};
 
     use starknet::{
-        get_caller_address, ContractAddress, ClassHash,
+        get_caller_address, ContractAddress, ClassHash, get_block_timestamp,
         storage::{Map, StoragePointerWriteAccess, StoragePathEntry},
     };
     use crate::interfaces::IAgreement;
@@ -39,6 +39,8 @@ pub mod Agreement {
         pub second_party_valid_id: ByteArray,
         pub signed: bool,
         pub validate_signature: bool,
+        pub agreement_title: ByteArray,
+        pub timestamp: u256,
     }
 
     #[event]
@@ -88,12 +90,13 @@ pub mod Agreement {
             content: ByteArray,
             second_party_address: ContractAddress,
             first_party_valid_id: ByteArray,
-            second_party_valid_id: ByteArray
+            second_party_valid_id: ByteArray,
+            agreement_title: ByteArray,
         ) -> u256 {
             let agreement_id = self.agreement_count.read() + 1;
             let caller_address = get_caller_address();
 
-            let newagreement = LegalAgreement {
+            let new_agreement = LegalAgreement {
                 creator: caller_address,
                 content,
                 second_party_address,
@@ -101,9 +104,11 @@ pub mod Agreement {
                 second_party_valid_id,
                 signed: true,
                 validate_signature: false,
+                agreement_title: agreement_title,
+                timestamp: get_block_timestamp().try_into().unwrap(),
             };
 
-            self.agreements.entry(agreement_id).write(newagreement);
+            self.agreements.entry(agreement_id).write(new_agreement);
             self.agreement_count.write(self.agreement_count.read() + 1);
 
             self.emit(AgreementCreated { agreement_id, creator: caller_address, });
