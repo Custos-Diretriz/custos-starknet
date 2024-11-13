@@ -32,6 +32,7 @@ pub mod Agreement {
 
     #[derive(Drop, Serde, starknet::Store)]
     pub struct LegalAgreement {
+        pub id: u256,
         pub creator: ContractAddress,
         pub content: ByteArray,
         pub second_party_address: ContractAddress,
@@ -97,6 +98,7 @@ pub mod Agreement {
             let caller_address = get_caller_address();
 
             let new_agreement = LegalAgreement {
+                id: agreement_id,
                 creator: caller_address,
                 content,
                 second_party_address,

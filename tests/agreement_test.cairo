@@ -47,6 +47,7 @@ fn test_create_agreement() {
 
     let agreement_details = agreement_contract.get_agreement_details(agreement_id);
 
+    assert!(agreement_details.id == 1, "wrong agreement id");
     assert!(agreement_details.creator == caller, "wrong creator address");
     assert!(agreement_details.content == content, "content doesn't match");
     assert!(
