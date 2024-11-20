@@ -79,7 +79,7 @@ To contribute, you need to set up the project locally:
    ```bash
    cd custos-starknet
    ```
-4. Install Scarb if you haven't already: [Scarb Installation Guide](https://docs.swmansion.com/scarb/docs/getting_started/installation).
+4. Install Scarb if you haven't already: [Scarb Installation Guide](https://docs.swmansion.com/scarb/docs.html#installation).
 5. Install Project Dependencies:
    ```bash
    scarb build
