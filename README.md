@@ -3,28 +3,28 @@
 Thank you for your interest in contributing to the Custos-Starknet project! This repository contains the smart contracts for Custos, written in Cairo using Scarb. We appreciate contributions of all types, whether it’s a bug fix, new feature, or improvement to our documentation. Please follow the guidelines below to ensure a smooth contribution process.
 
 ## Table of Contents
-1. [Code of Conduct](#code-of-conduct)
-2. [How to Contribute](#how-to-contribute)
-3. [Development Environment Setup](#development-environment-setup)
-4. [Project Setup](#project-setup)
-5. [Testing Guidelines](#testing-guidelines)
-6. [Branching and Commit Guidelines](#branching-and-commit-guidelines)
-7. [Pull Requests](#pull-requests)
-8. [Workflow Examples](#workflow-examples)
-9. [Coding Standards](#coding-standards)
-10. [Issue Reporting](#issue-reporting)
-11. [Resources](#resources)
-12. [License](#license)
+- [Code of Conduct](#code-of-conduct)
+- [How to Contribute](#how-to-contribute)
+- [Development Environment Setup](#development-environment-setup)
+- [Project Setup](#project-setup)
+- [Testing Guidelines](#testing-guidelines)
+- [Branching and Commit Guidelines](#branching-and-commit-guidelines)
+- [Pull Requests](#pull-requests)
+- [Workflow Examples](#workflow-examples)
+- [Coding Standards](#coding-standards)
+- [Issue Reporting](#issue-reporting)
+- [Resources](#resources)
+- [License](#license)
 
 ---
 
-## 1. Code of Conduct
+## Code of Conduct
 
 Please adhere to our [Code of Conduct](#). We expect all contributors to maintain professionalism and respect when engaging with the community.
 
 ---
 
-## 2. How to Contribute
+## How to Contribute
 
 There are several ways to contribute to Custos-Starknet:
 
@@ -35,7 +35,7 @@ There are several ways to contribute to Custos-Starknet:
 
 ---
 
-## 3. Development Environment Setup
+## Development Environment Setup
 
 ### Prerequisites
 
@@ -66,7 +66,7 @@ ii. [Scarb Installation](https://docs.swmansion.com/scarb/download.html)
 ---
 
 
-## 4. Project Setup
+##  Project Setup
 
 To contribute, you need to set up the project locally:
 
@@ -79,7 +79,7 @@ To contribute, you need to set up the project locally:
    ```bash
    cd custos-starknet
    ```
-4. Install Scarb if you haven't already: [Scarb Installation Guide](https://docs.swmansion.com/scarb/docs/getting_started/installation).
+4. Install Scarb if you haven't already: [Scarb Installation Guide](https://docs.swmansion.com/scarb/docs.html#installation).
 5. Install Project Dependencies:
    ```bash
    scarb build
@@ -92,7 +92,7 @@ To contribute, you need to set up the project locally:
 
 ---
 
-## 5. Testing Guidelines
+##  Testing Guidelines
 ### Running Tests
 
    ```bash
@@ -115,7 +115,7 @@ To contribute, you need to set up the project locally:
 
 ---
 
-## 6. Branching and Commit Guidelines
+## Branching and Commit Guidelines
 
 - **Branch Naming**: 
   - `feature/your-feature-name` for new features.
@@ -130,7 +130,7 @@ To contribute, you need to set up the project locally:
 
 ---
 
-## 7. Pull Requests
+## Pull Requests
 
 - Ensure your branch is up to date with the main branch.
 - Push your changes and open a PR against `master`.
@@ -139,7 +139,7 @@ To contribute, you need to set up the project locally:
 
 ---
 
-## 8. Workflow Examples
+## Workflow Examples
 
 ### Adding a New Feature
 
@@ -181,14 +181,14 @@ To contribute, you need to set up the project locally:
 
 ---
 
-## 9. Coding Standards
+## Coding Standards
 
 - **Cairo Code**: Follow the [Cairo documentation](https://www.cairo-lang.org/docs/) and best practices.
 - **Testing**: Write tests for your code and ensure all tests pass before submitting a PR.
 
 ---
 
-## 10. Issue Reporting
+## Issue Reporting
 
 When reporting issues:
 
@@ -198,7 +198,7 @@ When reporting issues:
 
 ---
 
-## 11. Resources
+## Resources
 
 - [Cairo Documentation](https://www.cairo-lang.org/docs/)
 - [Scarb Documentation](https://docs.swmansion.com/scarb/)
