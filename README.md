@@ -202,3 +202,9 @@ When reporting issues:
 
 - [Cairo Documentation](https://www.cairo-lang.org/docs/)
 - [Scarb Documentation](https://docs.swmansion.com/scarb/)
+
+---
+
+## License
+
+[MIT](https://opensource.org/license/mit)
