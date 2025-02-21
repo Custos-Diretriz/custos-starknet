@@ -1,7 +1,6 @@
 #[starknet::contract]
 pub mod CrimeRecord {
     use crate::interfaces::ICrimeWitness;
-    use core::hash::{ HashStateTrait, HashStateExTrait};
 
     use starknet::{
         ContractAddress, get_caller_address, ClassHash,
