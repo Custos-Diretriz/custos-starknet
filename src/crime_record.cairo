@@ -1,10 +1,11 @@
 #[starknet::contract]
 pub mod CrimeRecord {
     use crate::interfaces::ICrimeWitness;
+    use core::hash::{ HashStateTrait, HashStateExTrait};
 
     use starknet::{
         ContractAddress, get_caller_address, ClassHash,
-        storage::{Map, StoragePointerWriteAccess, StoragePathEntry}
+        storage::{Map, StoragePointerWriteAccess, StoragePathEntry, MutableVecTrait, Vec, VecTrait}
     };
     use openzeppelin::access::ownable::OwnableComponent;
     use openzeppelin::introspection::src5::SRC5Component;
@@ -41,6 +42,7 @@ pub mod CrimeRecord {
         token_id: u256,
         token_uri: Map::<u256, ByteArray>,
         owners: Map::<u256, ContractAddress>,
+        user_files: Map::<ContractAddress, Vec<ByteArray>>,
     }
 
     #[event]
@@ -94,6 +96,30 @@ pub mod CrimeRecord {
             self.token_id.write(id_count);
 
             true
+        }
+
+
+        fn store_cid(ref self: ContractState, file_cid: ByteArray) {
+            assert(file_cid.len() > 0, 'invalid cid');
+            let caller = get_caller_address();
+            let vec = self.user_files.entry(caller);
+            vec.append().write(file_cid);
+        }
+
+        // caller can only access CIDs uploaded from his account/wallet
+        fn get_cid(self: @ContractState) -> Array<ByteArray> {
+            let caller = get_caller_address();
+            let mut cid_arr = array![];
+            let cid_count = self.user_files.entry(caller).len();
+            assert!(cid_count > 0, "no cid for user");
+            for index in 0
+                ..self
+                    .user_files
+                    .entry(caller)
+                    .len() {
+                        cid_arr.append(self.user_files.entry(caller).at(index).read());
+                    };
+            cid_arr
         }
 
         fn get_token_uri(self: @ContractState, id: u256) -> ByteArray {

@@ -95,3 +95,34 @@ fn test_get_all_user_uploads() {
     stop_cheat_caller_address(crime_record_address);
 }
 
+#[test]
+fn test_store_cid_and_get_cid() {
+    let caller = contract_address_const::<'caller'>();
+    let (crime_record_address, crime_record_contract) = setup_crime_record();
+
+    let cid: ByteArray = "QmbEgRoiC7SG9d6oY5uDpkKx8BikE3vMWYi6M75Kns68N6";
+    start_cheat_caller_address(crime_record_address, caller);
+    crime_record_contract.store_cid(cid);
+
+    let cids = crime_record_contract.get_cid();
+    assert!(cids.len() == 1, "expected 1 CID");
+    stop_cheat_caller_address(crime_record_address);
+}
+
+#[test]
+#[should_panic(expected: "no cid for user")]
+fn test_store_cid_and_get_cid_unauthorized_caller() {
+    let caller = contract_address_const::<'caller'>();
+    let caller2 = contract_address_const::<'caller2'>();
+    let (crime_record_address, crime_record_contract) = setup_crime_record();
+
+    let cid: ByteArray = "QmbEgRoiC7SG9d6oY5uDpkKx8BikE3vMWYi6M75Kns68N6";
+    start_cheat_caller_address(crime_record_address, caller);
+    crime_record_contract.store_cid(cid);
+    stop_cheat_caller_address(crime_record_address);
+
+    start_cheat_caller_address(crime_record_address, caller2);
+    let cids = crime_record_contract.get_cid();
+    assert!(cids.len() == 1, "expected 1 CID");
+    stop_cheat_caller_address(crime_record_address);
+}
