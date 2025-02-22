@@ -25,7 +25,7 @@ pub trait ICrimeWitness<TContractState> {
     fn crime_record(ref self: TContractState, uri: ByteArray, data: Span<felt252>) -> bool;
     fn get_token_uri(self: @TContractState, id: u256) -> ByteArray;
     fn store_cid(ref self: TContractState, file_cid: ByteArray);
-    fn get_cid(self: @TContractState) -> Array<ByteArray>;
+    fn get_cid(self: @TContractState, account: ContractAddress) -> Array<ByteArray>;
     fn get_all_user_uploads(self: @TContractState, user: ContractAddress) -> Array<u256>;
 }
 
@@ -35,7 +35,7 @@ pub trait ICrimeWitnessTest<TContractState> {
     fn get_token_uri(self: @TContractState, id: u256) -> ByteArray;
     fn get_all_user_uploads(self: @TContractState, user: ContractAddress) -> Array<u256>;
     fn store_cid(ref self: TContractState, file_cid: ByteArray);
-    fn get_cid(self: @TContractState) -> Array<ByteArray>;
+    fn get_cid(self: @TContractState, account: ContractAddress) -> Array<ByteArray>;
    
     fn owner(self: @TContractState) -> ContractAddress;
 
