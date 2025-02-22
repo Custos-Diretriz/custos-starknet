@@ -1,5 +1,5 @@
 #[starknet::contract]
-pub mod CrimeRecord {
+pub mod CustosSafe {
     use crate::interfaces::ICrimeWitness;
 
     use starknet::{
