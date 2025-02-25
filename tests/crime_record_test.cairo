@@ -104,7 +104,7 @@ fn test_store_cid_and_get_cid() {
     start_cheat_caller_address(crime_record_address, caller);
     crime_record_contract.store_cid(cid);
 
-    let cids = crime_record_contract.get_cid();
+    let cids = crime_record_contract.get_cid(caller);
     assert!(cids.len() == 1, "expected 1 CID");
     stop_cheat_caller_address(crime_record_address);
 }
@@ -122,7 +122,7 @@ fn test_store_cid_and_get_cid_unauthorized_caller() {
     stop_cheat_caller_address(crime_record_address);
 
     start_cheat_caller_address(crime_record_address, caller2);
-    let cids = crime_record_contract.get_cid();
+    let cids = crime_record_contract.get_cid(caller2);
     assert!(cids.len() == 1, "expected 1 CID");
     stop_cheat_caller_address(crime_record_address);
 }

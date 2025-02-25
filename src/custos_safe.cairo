@@ -1,10 +1,13 @@
 #[starknet::contract]
 pub mod CustosSafe {
-    use crate::interfaces::ICrimeWitness;
+    use crate::interfaces::ICustosSafe;
 
     use starknet::{
-        ContractAddress, get_caller_address, ClassHash,
-        storage::{Map, StoragePointerWriteAccess, StoragePathEntry, MutableVecTrait, Vec, VecTrait}
+        ContractAddress, get_caller_address, ClassHash, contract_address_const,
+        storage::{
+            Map, StoragePointerReadAccess, StoragePointerWriteAccess, StoragePathEntry,
+            MutableVecTrait, Vec, VecTrait
+        }
     };
     use openzeppelin::access::ownable::OwnableComponent;
     use openzeppelin::introspection::src5::SRC5Component;
@@ -12,6 +15,7 @@ pub mod CustosSafe {
     use openzeppelin::token::erc721::ERC721HooksEmptyImpl;
     use openzeppelin::upgrades::UpgradeableComponent;
     use openzeppelin::upgrades::interface::IUpgradeable;
+    use alexandria_storage::list::{ List, ListTrait, IndexView };
 
     component!(path: ERC721Component, storage: erc721, event: ERC721Event);
     component!(path: SRC5Component, storage: src5, event: SRC5Event);
@@ -42,6 +46,17 @@ pub mod CustosSafe {
         token_uri: Map::<u256, ByteArray>,
         owners: Map::<u256, ContractAddress>,
         user_files: Map::<ContractAddress, Vec<ByteArray>>,
+        group: Map::<ContractAddress, Map<u256, Vec<ByteArray>>>,
+        group_list: Map::<ContractAddress, Map<u256, List<ByteArray>>>,
+        id_to_group: Map::<u256, Group>,
+    }
+
+    #[derive(Drop, starknet::Store)]
+    struct Group {
+        id: u256,
+        title: ByteArray,
+        owner: ContractAddress,
+        is_deleted: bool
     }
 
     #[event]
@@ -68,9 +83,6 @@ pub mod CustosSafe {
 
     #[constructor]
     fn constructor(ref self: ContractState, owner: ContractAddress) {
-        self
-            .erc721
-            .initializer("CrimeRecords", "CRD", "QmbEgRoiC7SG9d6oY5uDpkKx8BikE3vMWYi6M75Kns68N6");
         self.ownable.initializer(owner);
     }
 
@@ -83,29 +95,30 @@ pub mod CustosSafe {
     }
 
     #[abi(embed_v0)]
-    impl CrimeWitness of ICrimeWitness<ContractState> {
-        fn crime_record(ref self: ContractState, uri: ByteArray, data: Span<felt252>) -> bool {
-            let user = get_caller_address();
-            let id_count = self.token_id.read() + 1;
-
-            self.set_token_uri(id_count, uri);
-
-            self.erc721.safe_mint(user, id_count, data);
-
-            self.token_id.write(id_count);
-
-            true
-        }
-
-
-        fn store_cid(ref self: ContractState, file_cid: ByteArray) {
+    impl CustosSafeImpl of ICustosSafe<ContractState> {
+        fn upload_cid(ref self: ContractState, file_cid: ByteArray) {
             assert(file_cid.len() > 0, 'invalid cid');
             let caller = get_caller_address();
             let vec = self.user_files.entry(caller);
             vec.append().write(file_cid);
         }
 
-        // caller can only access CIDs uploaded from his account/wallet
+        fn batch_upload_cid(ref self: ContractState, cids: Array<ByteArray>) {
+            assert(cids.len() > 0, 'invalid cid array');
+            let caller = get_caller_address();
+
+            let mut i: usize = 0;
+            loop {
+                if i >= cids.len() {
+                    break;
+                }
+                self.user_files.entry(caller).append().write(cids.at(i).clone());
+
+                i += 1;
+            }
+        }
+
+
         fn get_cid(self: @ContractState, account: ContractAddress) -> Array<ByteArray> {
             let mut cid_arr = array![];
             let cid_count = self.user_files.entry(account).len();
@@ -120,36 +133,85 @@ pub mod CustosSafe {
             cid_arr
         }
 
-        fn get_token_uri(self: @ContractState, id: u256) -> ByteArray {
-            self.token_uri.entry(id).read()
-        }
-
-        fn get_all_user_uploads(self: @ContractState, user: ContractAddress) -> Array<u256> {
-            let mut user_ids = ArrayTrait::new();
-            let counter = self.token_id.read();
-            let mut index: u256 = 1;
-
-            while index < counter + 1 {
-                let owner = self.erc721.owner_of(index);
-                if owner == user {
-                    user_ids.append(index)
-                };
-                index += 1;
+        /// @dev Use uuid for group_id
+        fn create_group(ref self: ContractState, group_title: ByteArray, group_id: u256) -> u256 {
+            let caller = get_caller_address();
+            assert(group_id > 0, 'invalid id');
+            let group = Group {
+                id: group_id, title: group_title, owner: caller, is_deleted: false
             };
-            user_ids
+            self.id_to_group.entry(group_id).write(group);
+            group_id
         }
-    }
 
-    #[generate_trait]
-    impl Private of PrivateTrait {
-        fn set_token_uri(ref self: ContractState, id: u256, uri: ByteArray) -> bool {
-            self.token_uri.entry(id).write(uri);
+        fn delete_group(ref self: ContractState, group_id: u256) {
+            let caller = get_caller_address();
+            let mut group = self.id_to_group.entry(group_id).read();
 
-            let uri = self.token_uri.entry(id).read();
+            assert(caller == group.owner, 'unauthorized caller');
+            group =
+                Group {
+                    id: 0, title: "", owner: contract_address_const::<'0'>(), is_deleted: true
+                };
 
-            self.emit(URI { id, uri, msg: 'URI SET' });
+            self.id_to_group.entry(group_id).write(group);
+        }
 
-            true
+        /// @notice To add file to a group
+        fn add_to_group(ref self: ContractState, group_id: u256, cid: ByteArray) {
+            let caller = get_caller_address();
+            let group: Group = self.id_to_group.entry(group_id).read();
+            assert(group.is_deleted == false, 'inactive group');
+            let mut list = self.group.entry(caller).entry(group_id);
+            list.append().write(cid);
+        }
+
+        fn remove_from_group(ref self: ContractState, group_id: u256, cid: ByteArray) {
+            // let caller = get_caller_address();
+            // let group: Group = self.id_to_group.entry(group_id).read();
+            // assert(group.is_deleted == false, 'inactive group');
+
+            // let mut list = self.group_list.entry(caller).entry(group_id);
+            // let cid_count = list.len();
+            // assert(cid_count > 0, 'no cid in group');
+
+            // let mut found = false;
+            // let mut new_list: List<ByteArray> = ListTrait::new();
+            // let mut i: u32 = 0;
+
+            // loop {
+            //     if i >= cid_count {
+            //         break;
+            //     }
+
+            //     let stored_cid = list.get(i);
+            //     if stored_cid != cid {
+            //         new_list.append(stored_cid);
+            //     } else {
+            //         found = true;
+            //     }
+
+            //     i += 1;
+            // };
+
+            // assert(found, 'cid not found');
+            // self.group_list.entry(caller).entry(group_id).write(new_list);
+        }
+
+
+        fn get_group(self: @ContractState, group_id: u256) -> Array<ByteArray> {
+            let group: Group = self.id_to_group.entry(group_id).read();
+            assert(group.is_deleted == false, 'inactive group');
+
+            let caller = get_caller_address();
+            let mut group_arr = array![];
+            let vec = self.group.entry(caller).entry(group_id);
+            let group_count = vec.len();
+            assert(group_count > 0, 'no cid found');
+            for index in 0..group_count {
+                group_arr.append(vec.at(index).read());
+            };
+            group_arr
         }
     }
 }

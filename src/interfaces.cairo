@@ -36,10 +36,39 @@ pub trait ICrimeWitnessTest<TContractState> {
     fn get_all_user_uploads(self: @TContractState, user: ContractAddress) -> Array<u256>;
     fn store_cid(ref self: TContractState, file_cid: ByteArray);
     fn get_cid(self: @TContractState, account: ContractAddress) -> Array<ByteArray>;
-   
+
     fn owner(self: @TContractState) -> ContractAddress;
 
     fn name(self: @TContractState) -> ByteArray;
     fn symbol(self: @TContractState) -> ByteArray;
     fn token_uri(self: @TContractState, token_id: u256) -> ByteArray;
+}
+
+#[starknet::interface]
+pub trait ICustosSafe<TContractState> {
+    fn upload_cid(ref self: TContractState, file_cid: ByteArray);
+    fn batch_upload_cid(ref self: TContractState, cids: Array<ByteArray> );
+    fn get_cid(self: @TContractState, account: ContractAddress) -> Array<ByteArray>;
+    /// @returns group id
+    fn create_group(ref self: TContractState, group_title: ByteArray, group_id: u256) -> u256;
+    fn delete_group(ref self: TContractState, group_id: u256);
+    fn add_to_group(ref self: TContractState, group_id: u256, cid: ByteArray);
+    fn remove_from_group(ref self: TContractState, group_id: u256, cid: ByteArray);
+    fn get_group(self: @TContractState, group_id: u256) -> Array<ByteArray>;
+}
+
+#[starknet::interface]
+pub trait ICustosSafeTest<TContractState> {
+    fn upload_cid(ref self: TContractState, file_cid: ByteArray);
+    fn batch_upload_cid(ref self: TContractState, cids: Array<ByteArray> );
+    fn get_cid(self: @TContractState, account: ContractAddress) -> Array<ByteArray>;
+    /// @returns group id
+    fn create_group(ref self: TContractState, group_title: ByteArray, group_id: u256) -> u256;
+    fn delete_group(ref self: TContractState, group_id: u256);
+    fn add_to_group(ref self: TContractState, group_id: u256, cid: ByteArray);
+    fn remove_from_group(ref self: TContractState, group_id: u256, cid: ByteArray);
+    fn get_group(self: @TContractState, group_id: u256) -> Array<ByteArray>;
+
+    fn owner(self: @TContractState) -> ContractAddress;
+
 }
