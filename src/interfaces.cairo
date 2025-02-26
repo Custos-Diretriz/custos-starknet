@@ -52,8 +52,8 @@ pub trait ICustosSafe<TContractState> {
     /// @returns group id
     fn create_group(ref self: TContractState, group_title: ByteArray, group_id: u256) -> u256;
     fn delete_group(ref self: TContractState, group_id: u256);
-    fn add_to_group(ref self: TContractState, group_id: u256, cid: ByteArray);
-    fn remove_from_group(ref self: TContractState, group_id: u256, cid: ByteArray);
+    fn add_to_group(ref self: TContractState, group_id: u256, cid: ByteArray) -> u64;
+    fn remove_from_group(ref self: TContractState, group_id: u256, cid: ByteArray) -> ByteArray;
     fn get_group(self: @TContractState, group_id: u256) -> Array<ByteArray>;
 }
 
@@ -65,8 +65,8 @@ pub trait ICustosSafeTest<TContractState> {
     /// @returns group id
     fn create_group(ref self: TContractState, group_title: ByteArray, group_id: u256) -> u256;
     fn delete_group(ref self: TContractState, group_id: u256);
-    fn add_to_group(ref self: TContractState, group_id: u256, cid: ByteArray);
-    fn remove_from_group(ref self: TContractState, group_id: u256, cid: ByteArray);
+    fn add_to_group(ref self: TContractState, group_id: u256, cid: ByteArray) -> u64;
+    fn remove_from_group(ref self: TContractState, group_id: u256, cid: ByteArray) -> ByteArray;
     fn get_group(self: @TContractState, group_id: u256) -> Array<ByteArray>;
 
     fn owner(self: @TContractState) -> ContractAddress;

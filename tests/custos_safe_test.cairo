@@ -156,7 +156,8 @@ fn test_add_to_group() {
     // Execute
     start_cheat_caller_address(contract_address, caller);
     dispatcher.create_group(group_title, group_id);
-    dispatcher.add_to_group(group_id, cid.clone());
+    let cid_count = dispatcher.add_to_group(group_id, cid.clone());
+    assert(cid_count == 1, 'incorrect CID len');
     stop_cheat_caller_address(contract_address);
 
     // Assert
@@ -165,7 +166,7 @@ fn test_add_to_group() {
     assert(cids.at(0) == @cid, 'Uploaded CID incorrect');
 }
 
-// #[test]
+#[test]
 fn test_remove_from_group() {
     // Setup
     let owner: ContractAddress = contract_address_const::<'owner'>();
@@ -189,7 +190,8 @@ fn test_remove_from_group() {
     assert(cids.len() == 2, 'incorrect CID count');
     
     start_cheat_caller_address(contract_address, caller);
-    dispatcher.remove_from_group(group_id, cid1.clone());
+    let removed = dispatcher.remove_from_group(group_id, cid1.clone());
+    assert(removed == "", 'CID not removed');
     stop_cheat_caller_address(contract_address);
 
     // Assert

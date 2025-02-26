@@ -5,8 +5,8 @@ pub mod CustosSafe {
     use starknet::{
         ContractAddress, get_caller_address, ClassHash, contract_address_const,
         storage::{
-            Map, StoragePointerReadAccess, StoragePointerWriteAccess, StoragePathEntry,
-            MutableVecTrait, Vec, VecTrait
+            Map, StorageMapWriteAccess, StorageMapReadAccess, StoragePointerReadAccess,
+            StoragePointerWriteAccess, StoragePathEntry, MutableVecTrait, Vec, VecTrait
         }
     };
     use openzeppelin::access::ownable::OwnableComponent;
@@ -15,7 +15,7 @@ pub mod CustosSafe {
     use openzeppelin::token::erc721::ERC721HooksEmptyImpl;
     use openzeppelin::upgrades::UpgradeableComponent;
     use openzeppelin::upgrades::interface::IUpgradeable;
-    use alexandria_storage::list::{ List, ListTrait, IndexView };
+    use alexandria_storage::list::{List, ListTrait, IndexView};
 
     component!(path: ERC721Component, storage: erc721, event: ERC721Event);
     component!(path: SRC5Component, storage: src5, event: SRC5Event);
@@ -47,7 +47,7 @@ pub mod CustosSafe {
         owners: Map::<u256, ContractAddress>,
         user_files: Map::<ContractAddress, Vec<ByteArray>>,
         group: Map::<ContractAddress, Map<u256, Vec<ByteArray>>>,
-        group_list: Map::<ContractAddress, Map<u256, List<ByteArray>>>,
+        // group_list: Map::<ContractAddress, Map<u256, List<ByteArray>>>,
         id_to_group: Map::<u256, Group>,
     }
 
@@ -158,44 +158,50 @@ pub mod CustosSafe {
         }
 
         /// @notice To add file to a group
-        fn add_to_group(ref self: ContractState, group_id: u256, cid: ByteArray) {
+        fn add_to_group(ref self: ContractState, group_id: u256, cid: ByteArray) -> u64 {
             let caller = get_caller_address();
             let group: Group = self.id_to_group.entry(group_id).read();
             assert(group.is_deleted == false, 'inactive group');
-            let mut list = self.group.entry(caller).entry(group_id);
-            list.append().write(cid);
+            assert(cid.len() > 0, 'invalid cid');
+            self.group.entry(caller).entry(group_id).append().write(cid);
+
+            let stored_cids = self.group.entry(caller).entry(group_id);
+            assert(stored_cids.len() > 0, 'cid not stored');
+            stored_cids.len()
         }
 
-        fn remove_from_group(ref self: ContractState, group_id: u256, cid: ByteArray) {
-            // let caller = get_caller_address();
-            // let group: Group = self.id_to_group.entry(group_id).read();
-            // assert(group.is_deleted == false, 'inactive group');
+        fn remove_from_group(ref self: ContractState, group_id: u256, cid: ByteArray) -> ByteArray {
+            let caller = get_caller_address();
+            let group: Group = self.id_to_group.entry(group_id).read();
+            assert(group.is_deleted == false, 'inactive group');
 
-            // let mut list = self.group_list.entry(caller).entry(group_id);
-            // let cid_count = list.len();
-            // assert(cid_count > 0, 'no cid in group');
+            let mut list = self.group.entry(caller).entry(group_id);
+            let cid_count = list.len();
+            assert(cid_count > 0, 'no cid in group');
 
-            // let mut found = false;
-            // let mut new_list: List<ByteArray> = ListTrait::new();
-            // let mut i: u32 = 0;
+            let mut i = 0;
+            let mut index_of_cid = 0;
+            let mut found = false;
+            loop {
+                if i >= cid_count {
+                    break;
+                }
 
-            // loop {
-            //     if i >= cid_count {
-            //         break;
-            //     }
+                let stored_cid = list.at(i).read();
+                if stored_cid == cid {
+                    found = true;
+                    index_of_cid = i;
+                    break;
+                }
 
-            //     let stored_cid = list.get(i);
-            //     if stored_cid != cid {
-            //         new_list.append(stored_cid);
-            //     } else {
-            //         found = true;
-            //     }
+                i += 1;
+            };
 
-            //     i += 1;
-            // };
-
-            // assert(found, 'cid not found');
-            // self.group_list.entry(caller).entry(group_id).write(new_list);
+            assert(found, 'cid not found');
+            let cid_at_index = list.at(index_of_cid);
+            cid_at_index.write("");
+            assert(cid_at_index.read() == "", 'cid not removed');
+            cid_at_index.read()
         }
 
 
@@ -203,14 +209,19 @@ pub mod CustosSafe {
             let group: Group = self.id_to_group.entry(group_id).read();
             assert(group.is_deleted == false, 'inactive group');
 
-            let caller = get_caller_address();
-            let mut group_arr = array![];
-            let vec = self.group.entry(caller).entry(group_id);
-            let group_count = vec.len();
-            assert(group_count > 0, 'no cid found');
-            for index in 0..group_count {
-                group_arr.append(vec.at(index).read());
-            };
+            let mut group_arr = ArrayTrait::new();
+            let group_vec = self.group.entry(group.owner).entry(group_id);
+            let group_count = group_vec.len();
+
+            assert!(group_count > 0, "No CIDs found for this group");
+
+            for index in 0
+                ..group_count {
+                    let cid = group_vec.at(index).read();
+                    if cid.len() > 0 {
+                        group_arr.append(cid);
+                    };
+                };
             group_arr
         }
     }
